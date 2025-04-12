@@ -17,10 +17,18 @@ const app = new Hono<{
 app.use(
   '*',
   cors({
-    origin: 'http://127.0.0.1:5173 || https://sabka-bazaar-official.vercel.app',
-  credentials: true
+    origin: (origin) => {
+      const allowedOrigins = [
+        'http://127.0.0.1:5173',
+        'http://localhost:5173',
+        'https://sabka-bazaar-official.vercel.app',
+      ]
+      return allowedOrigins.includes(origin ?? '') ? origin : ''
+    },
+    credentials: true,
   })
 )
+
 
 app.route("/",authRoutes);
 app.route("/",cartRoutes);
