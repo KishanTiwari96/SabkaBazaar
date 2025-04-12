@@ -1,59 +1,29 @@
-import { Categories } from "./Categories";
-import { UserMenu } from "./UserMenu";
-import { Link, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { Categories } from './Categories';
+import { UserMenu } from './UserMenu';
+import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useUser } from './UserContext';
 
 export const AppBar = () => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const { user } = useUser(); // Get user from context
+  const [searchTerm, setSearchTerm] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    // Fetch user data from backend using token from localStorage
-    const token = localStorage.getItem("token");
-    if (token) {
-      fetchUserData(token);
-    } else {
-      setLoading(false);
-    }
-  }, []);
-
-  const fetchUserData = async (token: string) => {
-    try {
-      const response = await fetch("/api/me", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && searchTerm.trim()) {
-      navigate(`/category/all?search=${encodeURIComponent(searchTerm.trim())}`);
-      setMenuOpen(false);
-    }
-  };
 
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) setMenuOpen(false);
     };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  if (loading) return null;
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && searchTerm.trim()) {
+      navigate(`/category/all?search=${encodeURIComponent(searchTerm.trim())}`);
+      setMenuOpen(false);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-gradient-to-r from-white via-[#f8f9fa] to-white backdrop-blur-md shadow-md border-b border-gray-200">
@@ -70,7 +40,7 @@ export const AppBar = () => {
         <div className="flex-1 max-w-md mx-4 lg:mx-6">
           <div className="relative">
             <input
-              className="w-full border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none  transition-all placeholder-gray-400"
+              className="w-full border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none transition-all placeholder-gray-400"
               type="text"
               placeholder="Search..."
               value={searchTerm}
@@ -112,8 +82,8 @@ export const AppBar = () => {
             </Link>
             <button
               onClick={() => {
-                const section = document.getElementById("shop-section");
-                section?.scrollIntoView({ behavior: "smooth" });
+                const section = document.getElementById('shop-section');
+                section?.scrollIntoView({ behavior: 'smooth' });
               }}
               className="text-gray-700 hover:text-blue-600 text-sm font-medium transition"
             >
@@ -171,10 +141,10 @@ export const AppBar = () => {
 
       {/* Mobile Menu */}
       <div
-        className={`lg:hidden ${menuOpen ? "block" : "hidden"} bg-white shadow-md transition-all duration-300 ease-in-out overflow-y-auto`}
+        className={`lg:hidden ${menuOpen ? 'block' : 'hidden'} bg-white shadow-md transition-all duration-300 ease-in-out overflow-y-auto`}
         style={{
           zIndex: 40,
-          maxHeight: "calc(100vh - 80px)",
+          maxHeight: 'calc(100vh - 80px)',
         }}
       >
         <ul className="flex flex-col space-y-2 p-4">
@@ -189,8 +159,8 @@ export const AppBar = () => {
             onClick={() => {
               setMenuOpen(false);
               setTimeout(() => {
-                const section = document.getElementById("shop-section");
-                section?.scrollIntoView({ behavior: "smooth" });
+                const section = document.getElementById('shop-section');
+                section?.scrollIntoView({ behavior: 'smooth' });
               }, 100);
             }}
             className="w-full text-left text-gray-700 hover:text-blue-600 text-sm font-medium py-2"

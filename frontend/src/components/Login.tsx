@@ -1,39 +1,35 @@
-import { useState } from 'react'
-import axios from 'axios'
-import { BACKEND_URL } from '../config'
-import { AppBar } from './AppBar'
-import { useUser } from './UserContext'
-import { useNavigate } from 'react-router-dom'
+import { useState } from 'react';
+import axios from 'axios';
+import { BACKEND_URL } from '../config';
+import { AppBar } from './AppBar';
+import { useUser } from './UserContext';
+import { useNavigate } from 'react-router-dom';
 
 export const Login = () => {
-  const { setUser } = useUser()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const navigate = useNavigate()
+  const { setUser } = useUser();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
 
   const handleLogin = async () => {
     try {
-      const res = await axios.post(
-        `${BACKEND_URL}/login`,
-        { email, password }
-      )
+      const res = await axios.post(`${BACKEND_URL}/login`, { email, password });
 
-      // Assuming the response contains the token
-      const { token, user } = res.data
+      const { token, user } = res.data;
 
-      // Store the token in localStorage (or sessionStorage, depending on your needs)
-      localStorage.setItem('authToken', token)
-
-      alert('Login successful!')
-      navigate('/')
-
-      // Set the user in context
-      setUser(user)
+      if (token && user) {
+        localStorage.setItem('authToken', token);
+        setUser(user); // Set user in context
+        alert('Login successful!');
+        navigate('/');
+      } else {
+        throw new Error('Invalid response data');
+      }
     } catch (err) {
-      console.error('Login failed:', err)
-      alert('Login failed')
+      console.error('Login failed:', err);
+      alert('Login failed');
     }
-  }
+  };
 
   return (
     <div>
@@ -67,5 +63,5 @@ export const Login = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

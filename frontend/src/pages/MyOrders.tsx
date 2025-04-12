@@ -20,6 +20,7 @@ export const MyOrdersPage = () => {
   }
 
   const [orders, setOrders] = useState<Order[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const handleCancel = async (orderId: string) => {
@@ -27,13 +28,17 @@ export const MyOrdersPage = () => {
     if (!confirmed) return;
 
     try {
-      const token = localStorage.getItem('authToken'); // Fetch the token from localStorage
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        navigate("/login");
+        return;
+      }
       await axios.post(
-        `${BACKEND_URL}/orders/${orderId}/cancel`, 
-        {}, 
+        `${BACKEND_URL}/orders/${orderId}/cancel`,
+        {},
         {
           headers: {
-            Authorization: `Bearer ${token}`, // Add token to the headers
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -42,45 +47,50 @@ export const MyOrdersPage = () => {
           order.id === orderId ? { ...order, status: "CANCELLED" } : order
         )
       );
-    } catch (err) {
-      console.error("Failed to cancel order", err);
-      alert("Failed to cancel the order. Please try again.");
+      alert("Order cancelled successfully");
+    } catch (err: any) {
+      console.error("Failed to cancel order:", err);
+      alert(`Failed to cancel order: ${err.response?.data?.error || "Server error"}`);
     }
   };
 
   useEffect(() => {
-    // Check if the user is logged in before fetching orders
     const checkAuthentication = async () => {
       try {
-        const token = localStorage.getItem('authToken'); // Get the token from localStorage
+        const token = localStorage.getItem('authToken');
         if (!token) {
-          // If token doesn't exist, redirect to login
           navigate("/login");
           return;
         }
 
         const res = await axios.get(`${BACKEND_URL}/me`, {
           headers: {
-            Authorization: `Bearer ${token}`, // Include token in the header
+            Authorization: `Bearer ${token}`,
           },
         });
 
-        if (!res.data.user) {
-          // If no user, redirect to login
+        if (!res.data || (!res.data.user && !res.data.id)) {
+          localStorage.removeItem('authToken');
           navigate("/login");
-        } else {
-          // Fetch orders if user is authenticated
-          axios
-            .get(`${BACKEND_URL}/orders`, {
-              headers: {
-                Authorization: `Bearer ${token}`, // Include token in the header
-              },
-            })
-            .then((res) => setOrders(res.data.orders))
-            .catch((err) => console.error("Failed to load orders", err));
+          return;
         }
-      } catch (err) {
-        // Redirect to login if error occurs (user is not logged in)
+
+        try {
+          const ordersRes = await axios.get(`${BACKEND_URL}/orders`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          const ordersData = ordersRes.data.orders || ordersRes.data || [];
+          setOrders(ordersData);
+          setError(null);
+        } catch (err: any) {
+          console.error("Failed to load orders:", err);
+          setError(`Failed to load orders: ${err.response?.data?.error || "Server error"}`);
+        }
+      } catch (err: any) {
+        console.error("Authentication check failed:", err);
+        localStorage.removeItem('authToken');
         navigate("/login");
       }
     };
@@ -109,7 +119,9 @@ export const MyOrdersPage = () => {
       <div className="p-6 max-w-5xl mx-auto">
         <h2 className="text-3xl font-bold mb-6 text-center">My Orders</h2>
 
-        {orders.length === 0 ? (
+        {error ? (
+          <p className="text-center text-red-600">{error}</p>
+        ) : orders.length === 0 ? (
           <p className="text-center text-gray-600">You have no orders yet.</p>
         ) : (
           <div className="space-y-6">
@@ -136,12 +148,12 @@ export const MyOrdersPage = () => {
                   {order.items.map((item) => (
                     <div key={item.id} className="flex items-center gap-4">
                       <img
-                        src={item.product.imageUrl}
-                        alt={item.product.name}
+                        src={item.product.imageUrl || '/placeholder.png'}
+                        alt={item.product.name || 'Product'}
                         className="w-16 h-16 rounded object-cover border"
                       />
                       <div className="flex justify-between w-full">
-                        <span className="font-medium">{item.product.name}</span>
+                        <span className="font-medium">{item.product.name || 'Unknown Product'}</span>
                         <span className="text-sm text-gray-600">
                           Qty: {item.quantity}
                         </span>
@@ -151,7 +163,7 @@ export const MyOrdersPage = () => {
                 </div>
 
                 <div className="flex justify-between items-center mt-4">
-                  <div className="text-lg font-bold text-blue-700">Total: ₹{order.total}</div>
+                  <div className="text-lg font-bold text-blue-700">Total: ₹{order.total || 0}</div>
 
                   {order.status === "PENDING" && (
                     <button

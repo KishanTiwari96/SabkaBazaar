@@ -33,7 +33,7 @@ interface SimilarProduct {
   name: string;
   imageUrl: string;
   price: number;
-  rating: number; 
+  rating: number;
 }
 
 export const Product = () => {
@@ -48,7 +48,8 @@ export const Product = () => {
   const [isSticky, setIsSticky] = useState(true);
   const reviewRef = useRef<HTMLDivElement | null>(null);
 
-  const token = localStorage.getItem("token");
+  // Fixed: Use 'authToken' to match Login
+  const token = localStorage.getItem("authToken");
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -78,6 +79,10 @@ export const Product = () => {
     };
 
     const fetchUser = async () => {
+      if (!token) {
+        setUser(null);
+        return;
+      }
       try {
         const res = await axios.get(`${BACKEND_URL}/me`, {
           headers: {
@@ -92,7 +97,7 @@ export const Product = () => {
 
     fetchProduct();
     fetchUser();
-  }, [id]);
+  }, [id, token]);
 
   useEffect(() => {
     if (id) {
@@ -110,11 +115,21 @@ export const Product = () => {
   }, [id]);
 
   const addToCart = async () => {
+    if (!token) {
+      alert("Please log in to add items to cart");
+      navigate("/login");
+      return;
+    }
+    if (!product?.id) {
+      alert("Product not available");
+      return;
+    }
+
     try {
       await axios.post(
         `${BACKEND_URL}/cart`,
         {
-          productId: product?.id,
+          productId: product.id,
           quantity: 1,
         },
         {
@@ -124,8 +139,15 @@ export const Product = () => {
         }
       );
       alert("Added to cart!");
-    } catch (err) {
-      console.error("Error adding to cart", err);
+    } catch (err: any) {
+      console.error("Error adding to cart:", err);
+      if (err.response?.status === 401) {
+        alert("Session expired. Please log in again.");
+        localStorage.removeItem("authToken");
+        navigate("/login");
+      } else {
+        alert(`Failed to add to cart: ${err.response?.data?.error || "Server error"}`);
+      }
     }
   };
 
@@ -256,77 +278,75 @@ export const Product = () => {
 
       {/* Review Section */}
       <div ref={reviewRef} className="mt-12 px-4 lg:px-16">
-  <ReviewSection productId={product.id} currentUser={user} />
-</div>
-
+        <ReviewSection productId={product.id} currentUser={user} />
+      </div>
 
       {/* Similar Products */}
-{similarProducts.length > 0 && (
-  <div className="mt-12">
-    <h2 className="text-2xl font-semibold mb-4 ml-5 sm:ml-10">Similar Products</h2>
+      {similarProducts.length > 0 && (
+        <div className="mt-12">
+          <h2 className="text-2xl font-semibold mb-4 ml-5 sm:ml-10">Similar Products</h2>
 
-    {/* Desktop view */}
-    <div className="hidden sm:grid grid-cols-2 md:grid-cols-4 gap-6 px-5 sm:px-10">
-      {similarProducts.map((prod) => (
-        <div
-          key={prod.id}
-          className="border rounded-xl p-4 hover:shadow-lg transition cursor-pointer bg-white"
-          onClick={() => {
-            navigate(`/products/${prod.id}`);
-            window.location.reload();
-          }}
-        >
-          <img
-            src={prod.imageUrl}
-            alt={prod.name}
-            className="w-full h-40 object-cover rounded-md mb-3"
-          />
-          <h3 className="text-lg font-medium text-gray-800">{prod.name}</h3>
+          {/* Desktop view */}
+          <div className="hidden sm:grid grid-cols-2 md:grid-cols-4 gap-6 px-5 sm:px-10">
+            {similarProducts.map((prod) => (
+              <div
+                key={prod.id}
+                className="border rounded-xl p-4 hover:shadow-lg transition cursor-pointer bg-white"
+                onClick={() => {
+                  navigate(`/products/${prod.id}`);
+                  window.location.reload();
+                }}
+              >
+                <img
+                  src={prod.imageUrl}
+                  alt={prod.name}
+                  className="w-full h-40 object-cover rounded-md mb-3"
+                />
+                <h3 className="text-lg font-medium text-gray-800">{prod.name}</h3>
 
-          {/* Rating */}
-          <div className="mt-1 flex items-center gap-2">
-            <StaticStarRating rating={prod.rating} />
-            <span className="text-sm text-gray-600">({prod.rating.toFixed(1)})</span>
+                {/* Rating */}
+                <div className="mt-1 flex items-center gap-2">
+                  <StaticStarRating rating={prod.rating} />
+                  <span className="text-sm text-gray-600">({prod.rating.toFixed(1)})</span>
+                </div>
+
+                <p className="text-gray-600 mt-1">₹{prod.price}</p>
+              </div>
+            ))}
           </div>
 
-          <p className="text-gray-600 mt-1">₹{prod.price}</p>
-        </div>
-      ))}
-    </div>
+          {/* Mobile view */}
+          <div className="sm:hidden overflow-x-auto px-4 -mx-4">
+            <div className="flex gap-4 w-max">
+              {similarProducts.map((prod) => (
+                <div
+                  key={prod.id}
+                  className="min-w-[180px] max-w-[180px] border rounded-xl p-3 hover:shadow-md transition cursor-pointer bg-white"
+                  onClick={() => {
+                    navigate(`/products/${prod.id}`);
+                    window.location.reload();
+                  }}
+                >
+                  <img
+                    src={prod.imageUrl}
+                    alt={prod.name}
+                    className="w-full h-32 object-cover rounded-md mb-2"
+                  />
+                  <h3 className="text-sm font-medium text-gray-800 truncate">{prod.name}</h3>
 
-    {/* Mobile view */}
-    <div className="sm:hidden overflow-x-auto px-4 -mx-4">
-      <div className="flex gap-4 w-max">
-        {similarProducts.map((prod) => (
-          <div
-            key={prod.id}
-            className="min-w-[180px] max-w-[180px] border rounded-xl p-3 hover:shadow-md transition cursor-pointer bg-white"
-            onClick={() => {
-              navigate(`/products/${prod.id}`);
-              window.location.reload();
-            }}
-          >
-            <img
-              src={prod.imageUrl}
-              alt={prod.name}
-              className="w-full h-32 object-cover rounded-md mb-2"
-            />
-            <h3 className="text-sm font-medium text-gray-800 truncate">{prod.name}</h3>
+                  {/* Rating */}
+                  <div className="mt-1 flex items-center gap-2">
+                    <StaticStarRating rating={prod.rating} />
+                    <span className="text-xs text-gray-600">({prod.rating.toFixed(1)})</span>
+                  </div>
 
-            {/* Rating */}
-            <div className="mt-1 flex items-center gap-2">
-              <StaticStarRating rating={prod.rating} />
-              <span className="text-xs text-gray-600">({prod.rating.toFixed(1)})</span>
+                  <p className="text-gray-600 text-sm mt-1">₹{prod.price}</p>
+                </div>
+              ))}
             </div>
-
-            <p className="text-gray-600 text-sm mt-1">₹{prod.price}</p>
           </div>
-        ))}
-      </div>
-    </div>
-  </div>
-)}
-
+        </div>
+      )}
     </div>
   );
 };

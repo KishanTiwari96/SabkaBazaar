@@ -23,12 +23,12 @@ export const Cart = () => {
   const navigate = useNavigate();
 
   const fetchCart = async () => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("authToken"); // Fixed: Changed from "token" to "authToken"
 
     try {
       const res = await axios.get(`${BACKEND_URL}/cart`, {
         headers: {
-          Authorization: `Bearer ${token}`, // Adding the token in the Authorization header
+          Authorization: `Bearer ${token}`,
         },
       });
       setCartItems(res.data.cart);
@@ -38,9 +38,8 @@ export const Cart = () => {
   };
 
   useEffect(() => {
-    // Check if the user is logged in first
     const checkAuthentication = async () => {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("authToken"); // Fixed: Changed from "token" to "authToken"
 
       if (!token) {
         navigate("/login");
@@ -50,7 +49,7 @@ export const Cart = () => {
       try {
         const res = await axios.get(`${BACKEND_URL}/me`, {
           headers: {
-            Authorization: `Bearer ${token}`, // Adding the token in the Authorization header
+            Authorization: `Bearer ${token}`,
           },
         });
 
@@ -60,6 +59,7 @@ export const Cart = () => {
           fetchCart();
         }
       } catch (err) {
+        console.error("Authentication check failed:", err);
         navigate("/login");
       }
     };
@@ -68,7 +68,7 @@ export const Cart = () => {
   }, [navigate]);
 
   const updateQuantity = async (id: string, quantity: number) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("authToken"); // Fixed: Changed from "token" to "authToken"
 
     try {
       await axios.put(
@@ -76,7 +76,7 @@ export const Cart = () => {
         { quantity },
         {
           headers: {
-            Authorization: `Bearer ${token}`, // Adding the token in the Authorization header
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -87,12 +87,12 @@ export const Cart = () => {
   };
 
   const removeItem = async (id: string) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("authToken"); // Fixed: Changed from "token" to "authToken"
 
     try {
       await axios.delete(`${BACKEND_URL}/cart/${id}`, {
         headers: {
-          Authorization: `Bearer ${token}`, // Adding the token in the Authorization header
+          Authorization: `Bearer ${token}`,
         },
       });
       fetchCart();
@@ -102,12 +102,12 @@ export const Cart = () => {
   };
 
   const clearCart = async () => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("authToken"); // Fixed: Changed from "token" to "authToken"
 
     try {
       await axios.delete(`${BACKEND_URL}/cart`, {
         headers: {
-          Authorization: `Bearer ${token}`, // Adding the token in the Authorization header
+          Authorization: `Bearer ${token}`,
         },
       });
       fetchCart();
