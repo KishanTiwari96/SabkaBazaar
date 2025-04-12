@@ -48,6 +48,8 @@ export const Product = () => {
   const [isSticky, setIsSticky] = useState(true);
   const reviewRef = useRef<HTMLDivElement | null>(null);
 
+  const token = localStorage.getItem("token");
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -62,7 +64,6 @@ export const Product = () => {
       if (reviewRef.current) observer.unobserve(reviewRef.current);
     };
   }, []);
-
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -79,7 +80,9 @@ export const Product = () => {
     const fetchUser = async () => {
       try {
         const res = await axios.get(`${BACKEND_URL}/me`, {
-          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
         setUser(res.data.user);
       } catch {
@@ -98,14 +101,13 @@ export const Product = () => {
         .then((res) => {
           const mappedProducts = res.data.products.map((p: any) => ({
             ...p,
-            rating: p.avgRating || 0, // 🔁 mapping avgRating to rating
+            rating: p.avgRating || 0,
           }));
           setSimilarProducts(mappedProducts);
         })
         .catch((err) => console.error("Failed to fetch similar products", err));
     }
   }, [id]);
-  
 
   const addToCart = async () => {
     try {
@@ -115,7 +117,11 @@ export const Product = () => {
           productId: product?.id,
           quantity: 1,
         },
-        { withCredentials: true }
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       alert("Added to cart!");
     } catch (err) {

@@ -22,8 +22,14 @@ export default function BestSeller() {
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
+    const token = localStorage.getItem("token"); // Retrieve token from localStorage
+
     axios
-      .get(`${BACKEND_URL}/products/best-sellers`, { withCredentials: true })
+      .get(`${BACKEND_URL}/products/best-sellers`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Send token in Authorization header
+        },
+      })
       .then((res) => setProducts(res.data.products))
       .catch((error) => console.error("Error fetching best sellers:", error));
   }, []);

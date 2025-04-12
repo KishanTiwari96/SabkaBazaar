@@ -1,6 +1,5 @@
 import { Hono } from 'hono'
 import { getPrisma } from '../db';
-import { getCookie } from 'hono/cookie'
 import { sign, verify } from 'hono/jwt'
 
 const reviews = new Hono<{
@@ -12,7 +11,9 @@ const reviews = new Hono<{
 
 const verifyUser = async (c: any) => {
   const prisma = getPrisma(c.env.DATABASE_URL);
-  const token = getCookie(c, 'token')
+
+  // Get the token from the Authorization header (frontend will send it)
+  const token = c.req.header('Authorization')?.replace('Bearer ', '')
   if (!token) return null
   try {
     const decoded = await verify(token, c.env.JWT_SECRET) as { id: string }

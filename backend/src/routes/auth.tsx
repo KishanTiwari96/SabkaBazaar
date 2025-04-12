@@ -2,8 +2,6 @@ import { Hono } from 'hono'
 import { getPrisma } from '../db';
 import bcrypt from 'bcryptjs'
 import { sign, verify } from 'hono/jwt'
-import { getCookie, setCookie, deleteCookie } from 'hono/cookie'
-
 
 const auth = new Hono<{
   Bindings: {
@@ -42,41 +40,41 @@ auth.post('/signup', async (c) => {
   }
 });
 
-
 auth.post('/login', async (c) => {
   const prisma = getPrisma(c.env.DATABASE_URL);
   const { email, password } = await c.req.json();
   const user = await prisma.user.findUnique({ where: { email } })
+  
   if (!user) {
     return c.json({ error: 'Invalid credentials' }, 401)
   }
+
   const valid = await bcrypt.compare(password, user.password)
   if (!valid) {
     return c.json({ error: 'Invalid credentials' }, 401)
   }
+
   const token = await sign({ id: user.id, exp: Math.floor(Date.now() / 1000) + (60 * 60) }, c.env.JWT_SECRET)
-  setCookie(c, 'token', token, {
-    httpOnly: true,
-    maxAge: 7 * 24 * 60 * 60, // 7 days
-    path: '/',
-    sameSite: 'Lax',
-    secure: false,
-    domain: 'localhost'
+
+  return c.json({
+    message: 'Login successful',
+    token,  // Send the token as part of the response
+    user: { id: user.id, email: user.email, name: user.name }
   })
-  return c.json({ message: 'Login successful', user: { id: user.id, email: user.email, name: user.name } })
 })
 
 auth.get('/logout', (c) => {
-  const prisma = getPrisma(c.env.DATABASE_URL);
-  deleteCookie(c, 'token')
-  return c.json({ message: 'Logged out successfully' })
+  return c.json({ message: 'Logged out successfully' })  // Handle client-side logout
 })
 
 auth.get('/me', async (c) => {
-  const token = getCookie(c, 'token')
-  if (!token) {
+  // Get the token from the 'Authorization' header
+  const authHeader = c.req.header('Authorization');
+  if (!authHeader) {
     return c.json({ user: null }, 401)
   }
+
+  const token = authHeader.replace('Bearer ', '');  // Extract the token from "Bearer <token>"
 
   try {
     const prisma = getPrisma(c.env.DATABASE_URL);
@@ -99,4 +97,4 @@ auth.get('/me', async (c) => {
   }
 })
 
-export default auth
+export default auth;

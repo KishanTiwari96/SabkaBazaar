@@ -25,9 +25,18 @@ export const MyOrdersPage = () => {
   const handleCancel = async (orderId: string) => {
     const confirmed = window.confirm("Are you sure you want to cancel this order?");
     if (!confirmed) return;
-  
+
     try {
-      await axios.post(`${BACKEND_URL}/orders/${orderId}/cancel`, {}, { withCredentials: true });
+      const token = localStorage.getItem('authToken'); // Fetch the token from localStorage
+      await axios.post(
+        `${BACKEND_URL}/orders/${orderId}/cancel`, 
+        {}, 
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Add token to the headers
+          },
+        }
+      );
       setOrders(prev =>
         prev.map(order =>
           order.id === orderId ? { ...order, status: "CANCELLED" } : order
@@ -38,19 +47,35 @@ export const MyOrdersPage = () => {
       alert("Failed to cancel the order. Please try again.");
     }
   };
-  
+
   useEffect(() => {
     // Check if the user is logged in before fetching orders
     const checkAuthentication = async () => {
       try {
-        const res = await axios.get(`${BACKEND_URL}/me`, { withCredentials: true });
+        const token = localStorage.getItem('authToken'); // Get the token from localStorage
+        if (!token) {
+          // If token doesn't exist, redirect to login
+          navigate("/login");
+          return;
+        }
+
+        const res = await axios.get(`${BACKEND_URL}/me`, {
+          headers: {
+            Authorization: `Bearer ${token}`, // Include token in the header
+          },
+        });
+
         if (!res.data.user) {
-          // If user is not authenticated, redirect to login page
+          // If no user, redirect to login
           navigate("/login");
         } else {
           // Fetch orders if user is authenticated
           axios
-            .get(`${BACKEND_URL}/orders`, { withCredentials: true })
+            .get(`${BACKEND_URL}/orders`, {
+              headers: {
+                Authorization: `Bearer ${token}`, // Include token in the header
+              },
+            })
             .then((res) => setOrders(res.data.orders))
             .catch((err) => console.error("Failed to load orders", err));
         }

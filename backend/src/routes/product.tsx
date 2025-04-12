@@ -1,7 +1,6 @@
 import { Hono } from 'hono'
 import { getPrisma } from '../db';
-import { sign,verify } from 'hono/jwt'
-import { getCookie } from 'hono/cookie'
+import { sign, verify } from 'hono/jwt'
 import { Prisma } from '@prisma/client'
 
 const products = new Hono<{
@@ -11,19 +10,21 @@ const products = new Hono<{
     }
 }>()
 
+// Function to verify user by token in the Authorization header
 const verifyUser = async (c:any) => {
     const prisma = getPrisma(c.env.DATABASE_URL);
-    const token = getCookie(c,'token')
-    if(!token) return null
+    const token = c.req.headers.get('Authorization')?.replace('Bearer ', ''); // Get token from Authorization header
+    if (!token) return null
     try {
         const decoded = await verify(token, c.env.JWT_SECRET) as { id: string }
         const user = await prisma.user.findUnique({ where: { id: decoded.id } })
         return user
-    } catch{
+    } catch {
         return null
     }
 }
 
+// Route to get all products with filtering
 products.get('/products', async (c) => {
   const prisma = getPrisma(c.env.DATABASE_URL);
 
@@ -44,7 +45,6 @@ products.get('/products', async (c) => {
     };
   }
 
-  // ✅ Only add category filter if it's NOT 'all'
   if (category && category.toLowerCase() !== 'all') {
     whereClause.category = {
       equals: category,
@@ -68,7 +68,6 @@ products.get('/products', async (c) => {
     orderBy: sort === 'asc' || sort === 'desc' ? { price: sort } : undefined,
   });
 
-  // Calculate avgRating and attach it to each product
   const productsWithRating = products.map((product) => {
     const totalRating = product.Review.reduce((sum, review) => sum + review.rating, 0);
     const avgRating = product.Review.length ? totalRating / product.Review.length : 0;
@@ -83,6 +82,7 @@ products.get('/products', async (c) => {
   return c.json(productsWithRating);
 });
 
+// Route to get all brands with filtering
 products.get('/brands', async (c) => {
   const prisma = getPrisma(c.env.DATABASE_URL);
   const category = c.req.query('category');
@@ -119,9 +119,7 @@ products.get('/brands', async (c) => {
   return c.json(brands);
 });
 
-
-
-
+// Route to get best-selling products
 products.get('/products/best-sellers', async (c) => {
   const prisma = getPrisma(c.env.DATABASE_URL);
 
@@ -138,7 +136,7 @@ products.get('/products/best-sellers', async (c) => {
       },
       Review: true,
     },
-    take: 8, // or however many best sellers you want
+    take: 8,
   });
 
   const enrichedProducts = products.map((p) => {
@@ -157,8 +155,7 @@ products.get('/products/best-sellers', async (c) => {
   return c.json({ products: enrichedProducts });
 });
 
-
-
+// Route to get details of a specific product by id
 products.get('/products/:id', async (c) => {
   const prisma = getPrisma(c.env.DATABASE_URL);
   const id = c.req.param('id');
@@ -191,7 +188,7 @@ products.get('/products/:id', async (c) => {
   });
 });
 
-
+// Route to create a new product (only accessible by admin)
 products.post('/products', async (c) => {
   const prisma = getPrisma(c.env.DATABASE_URL);
   const user = await verifyUser(c);
@@ -207,7 +204,7 @@ products.post('/products', async (c) => {
     images
   } = await c.req.json();
 
-  const imageUrl = images?.[0] || ""; // use first image as main thumbnail
+  const imageUrl = images?.[0] || ""; 
 
   let brand = null;
 
@@ -245,7 +242,7 @@ products.post('/products', async (c) => {
   return c.json({ message: "Product created", product });
 });
 
-
+// Route to update an existing product (only accessible by admin)
 products.put('/products/:id', async (c) => {
   const prisma = getPrisma(c.env.DATABASE_URL);
   const user = await verifyUser(c);
@@ -254,17 +251,14 @@ products.put('/products/:id', async (c) => {
   const id = c.req.param('id');
   const { images, ...data } = await c.req.json();
 
-  // If there are images, update imageUrl with the first one for primary display
   if (images && images.length > 0) {
-    data.imageUrl = images[0]; // for thumbnail or default image
+    data.imageUrl = images[0]; 
   }
 
-  // Step 1: Delete existing images for this product
   await prisma.image.deleteMany({
     where: { productId: id }
   });
 
-  // Step 2: Update product and insert new images
   const updated = await prisma.product.update({
     where: { id },
     data: {
@@ -282,6 +276,7 @@ products.put('/products/:id', async (c) => {
   return c.json({ message: 'Product updated', product: updated });
 });
 
+// Route to get similar products
 products.get('/products/:id/similar', async (c) => {
   const prisma = getPrisma(c.env.DATABASE_URL);
   const id = c.req.param('id');
@@ -296,7 +291,7 @@ products.get('/products/:id/similar', async (c) => {
   const similarProducts = await prisma.product.findMany({
     where: {
       category: product.category,
-      NOT: { id }, // exclude the current product
+      NOT: { id }, 
     },
     take: 4,
   });
@@ -304,7 +299,7 @@ products.get('/products/:id/similar', async (c) => {
   return c.json({ products: similarProducts });
 });
 
-
+// Route to delete a product (only accessible by admin)
 products.delete('/products/:id', async (c) => {
     const prisma = getPrisma(c.env.DATABASE_URL);
     const user = await verifyUser(c)
@@ -315,6 +310,6 @@ products.delete('/products/:id', async (c) => {
     await prisma.product.delete({ where: { id } })
   
     return c.json({ message: 'Product deleted' })
-  })
-  
-export default products
+})
+
+export default products;

@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import { useUser } from "./UserContext";
-import axios from "axios";
-import { BACKEND_URL } from "../config";
 
 export const UserMenu = () => {
   const { user, setUser } = useUser();
@@ -9,8 +7,12 @@ export const UserMenu = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.get(`${BACKEND_URL}/logout`, { withCredentials: true });
+      // Remove token from localStorage (or sessionStorage, depending on where you store it)
+      localStorage.removeItem("authToken");  // or sessionStorage.removeItem("authToken");
+
+      // Clear the user state in context
       setUser(null);
+
       setOpen(false); // Close dropdown after logout
     } catch (error) {
       console.error("Logout failed:", error);
@@ -19,7 +21,7 @@ export const UserMenu = () => {
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (e:any) => {
+    const handleClickOutside = (e: any) => {
       if (open && !e.target.closest(".UserMenu")) {
         setOpen(false);
       }

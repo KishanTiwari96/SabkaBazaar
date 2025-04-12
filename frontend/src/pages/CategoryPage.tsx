@@ -35,9 +35,20 @@ const CategoryPage = () => {
       if (filters.sort) url += `&sort=${filters.sort}`;
       if (searchQuery) url += `&search=${searchQuery}`;
 
-      const res = await axios.get(url);
-      setProducts(res.data);
+      try {
+        const token = localStorage.getItem('authToken'); // or use cookies if you're storing the token elsewhere
+        const res = await axios.get(url, {
+          headers: {
+            Authorization: `Bearer ${token}`, // Add token to the request headers
+          },
+        });
+        setProducts(res.data);
+      } catch (err) {
+        console.error('Error fetching products:', err);
+        // Handle error (e.g., token expired, unauthorized, etc.)
+      }
     };
+
     fetchProducts();
   }, [categoryName, filters, searchQuery]);
 
@@ -80,11 +91,11 @@ const CategoryPage = () => {
         {/* Products Section */}
         <div className="col-span-1 md:col-span-3">
           <div className="p-6">
-          <h2 className="text-2xl font-bold mb-4">
-            {searchQuery
-              ? `Showing results for "${searchQuery}"`
-              : `Showing results for "${categoryName}"`}
-          </h2>
+            <h2 className="text-2xl font-bold mb-4">
+              {searchQuery
+                ? `Showing results for "${searchQuery}"`
+                : `Showing results for "${categoryName}"`}
+            </h2>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {Array.isArray(products) &&

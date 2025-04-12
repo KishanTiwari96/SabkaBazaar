@@ -4,7 +4,6 @@ import { StarRatingInput } from './StarRatingInput'
 import { StaticStarRating } from './StaticStarRating'
 import { BACKEND_URL } from '../config'
 
-
 interface Review {
   id: string
   rating: number
@@ -32,7 +31,12 @@ export default function ReviewSection({ productId, currentUser }: Props) {
   const [sortBy, setSortBy] = useState<'date' | 'rating'>('date')
 
   const fetchReviews = async () => {
-    const res = await axios.get(`${BACKEND_URL}/reviews/${productId}`, { withCredentials: true })
+    const token = localStorage.getItem('authToken')
+    const res = await axios.get(`${BACKEND_URL}/reviews/${productId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
     setReviews(res.data.reviews)
   }
 
@@ -45,10 +49,25 @@ export default function ReviewSection({ productId, currentUser }: Props) {
   const handleSubmit = async () => {
     if (!comment) return
 
+    const token = localStorage.getItem('authToken')
+    const config = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+
     if (editId) {
-      await axios.put(`${BACKEND_URL}/reviews/${editId}`, { rating, comment }, { withCredentials: true })
+      await axios.put(
+        `${BACKEND_URL}/reviews/${editId}`,
+        { rating, comment },
+        config
+      )
     } else {
-      await axios.post(`${BACKEND_URL}/reviews/${productId}`, { rating, comment }, { withCredentials: true })
+      await axios.post(
+        `${BACKEND_URL}/reviews/${productId}`,
+        { rating, comment },
+        config
+      )
     }
 
     setComment('')
@@ -64,7 +83,13 @@ export default function ReviewSection({ productId, currentUser }: Props) {
   }
 
   const handleDelete = async (id: string) => {
-    await axios.delete(`${BACKEND_URL}/reviews/${id}`, { withCredentials: true })
+    const token = localStorage.getItem('authToken')
+    const config = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+    await axios.delete(`${BACKEND_URL}/reviews/${id}`, config)
     fetchReviews()
   }
 
@@ -87,7 +112,7 @@ export default function ReviewSection({ productId, currentUser }: Props) {
           <div>
             <label className="block text-sm font-medium mb-1">Rating:</label>
             <StarRatingInput value={rating} onChange={setRating} />
-        </div>
+          </div>
 
           <textarea
             placeholder="Write your review..."
@@ -107,7 +132,6 @@ export default function ReviewSection({ productId, currentUser }: Props) {
             <div>
               <p className="font-semibold">{r.user.name}</p>
               <StaticStarRating rating={r.rating} />
-
               <p>{r.comment}</p>
             </div>
             {currentUser?.id === r.user.id && (

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { BACKEND_URL } from "../config";
 import { AppBar } from "./AppBar";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
 interface Product {
   id: string;
@@ -23,8 +23,14 @@ export const Cart = () => {
   const navigate = useNavigate();
 
   const fetchCart = async () => {
+    const token = localStorage.getItem("token");
+
     try {
-      const res = await axios.get(`${BACKEND_URL}/cart`, { withCredentials: true });
+      const res = await axios.get(`${BACKEND_URL}/cart`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Adding the token in the Authorization header
+        },
+      });
       setCartItems(res.data.cart);
     } catch (err) {
       console.error("Error fetching cart", err);
@@ -34,16 +40,26 @@ export const Cart = () => {
   useEffect(() => {
     // Check if the user is logged in first
     const checkAuthentication = async () => {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
       try {
-        const res = await axios.get(`${BACKEND_URL}/me`, { withCredentials: true });
+        const res = await axios.get(`${BACKEND_URL}/me`, {
+          headers: {
+            Authorization: `Bearer ${token}`, // Adding the token in the Authorization header
+          },
+        });
+
         if (!res.data.user) {
-          // If not authenticated, redirect to login page
           navigate("/login");
         } else {
           fetchCart();
         }
       } catch (err) {
-        // If error (i.e., user is not authenticated), redirect to login
         navigate("/login");
       }
     };
@@ -52,8 +68,18 @@ export const Cart = () => {
   }, [navigate]);
 
   const updateQuantity = async (id: string, quantity: number) => {
+    const token = localStorage.getItem("token");
+
     try {
-      await axios.put(`${BACKEND_URL}/cart/${id}`, { quantity }, { withCredentials: true });
+      await axios.put(
+        `${BACKEND_URL}/cart/${id}`,
+        { quantity },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Adding the token in the Authorization header
+          },
+        }
+      );
       fetchCart();
     } catch (err) {
       console.error("Error updating quantity", err);
@@ -61,8 +87,14 @@ export const Cart = () => {
   };
 
   const removeItem = async (id: string) => {
+    const token = localStorage.getItem("token");
+
     try {
-      await axios.delete(`${BACKEND_URL}/cart/${id}`, { withCredentials: true });
+      await axios.delete(`${BACKEND_URL}/cart/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Adding the token in the Authorization header
+        },
+      });
       fetchCart();
     } catch (err) {
       console.error("Error removing item", err);
@@ -70,8 +102,14 @@ export const Cart = () => {
   };
 
   const clearCart = async () => {
+    const token = localStorage.getItem("token");
+
     try {
-      await axios.delete(`${BACKEND_URL}/cart`, { withCredentials: true });
+      await axios.delete(`${BACKEND_URL}/cart`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Adding the token in the Authorization header
+        },
+      });
       fetchCart();
     } catch (err) {
       console.error("Error clearing cart", err);
@@ -83,7 +121,7 @@ export const Cart = () => {
       state: {
         cartItems,
         total: calculateTotal(cartItems),
-      }
+      },
     });
   };
 

@@ -1,6 +1,5 @@
 import { Hono } from 'hono'
 import { getPrisma } from '../db';
-import { getCookie } from 'hono/cookie'
 import { sign, verify } from 'hono/jwt'
 
 const cart = new Hono<{
@@ -12,8 +11,11 @@ const cart = new Hono<{
 
 const verifyUser = async (c: any) => {
   const prisma = getPrisma(c.env.DATABASE_URL);
-  const token = getCookie(c, 'token')
-  if (!token) return null
+  const authHeader = c.req.headers.get('Authorization')
+  if (!authHeader) return null
+  
+  const token = authHeader.replace('Bearer ', '')  // Extract the token from "Bearer <token>"
+  
   try {
     const decoded = await verify(token, c.env.JWT_SECRET) as { id: string }
     const user = await prisma.user.findUnique({ where: { id: decoded.id } })

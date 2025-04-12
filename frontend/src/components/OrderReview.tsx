@@ -12,14 +12,34 @@ export const OrderReview = () => {
   const [orderSuccess, setOrderSuccess] = useState(false);
 
   useEffect(() => {
-    axios
-      .get(`${BACKEND_URL}/me`, { withCredentials: true })
-      .then((res) => setUser(res.data.user))
-      .catch((err) => console.error("Failed to fetch user info", err));
+    // Retrieve the token from localStorage
+    const token = localStorage.getItem('authToken');
+
+    if (token) {
+      // Set the token in the Authorization header for all requests
+      axios.defaults.headers['Authorization'] = `Bearer ${token}`;
+
+      // Fetch user information using the token
+      axios
+        .get(`${BACKEND_URL}/me`)
+        .then((res) => setUser(res.data.user))
+        .catch((err) => console.error("Failed to fetch user info", err));
+    } else {
+      console.log("No token found");
+    }
   }, []);
 
   const handleConfirmOrder = async () => {
     try {
+      const token = localStorage.getItem('authToken');
+
+      if (!token) {
+        alert("You need to log in to place an order");
+        navigate("/login");
+        return;
+      }
+
+      // Include the token in the request headers
       await axios.post(
         `${BACKEND_URL}/orders`,
         {
@@ -28,8 +48,7 @@ export const OrderReview = () => {
             quantity: item.quantity,
           })),
           total,
-        },
-        { withCredentials: true }
+        }
       );
 
       setOrderSuccess(true);
@@ -69,7 +88,6 @@ export const OrderReview = () => {
       </div>
     );
   }
-  
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 font-sans">
@@ -91,26 +109,26 @@ export const OrderReview = () => {
       <div className="bg-white shadow-lg rounded-2xl p-6 mb-8 border border-gray-200">
         <h2 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">🧾 Items in Your Cart</h2>
         <div className="space-y-6">
-  {cartItems.map((item: any) => (
-    <div
-      key={item.id}
-      className="flex flex-col sm:flex-row justify-between sm:items-center gap-4"
-    >
-      <div className="flex items-start gap-4">
-        <img
-          src={item.product.imageUrl}
-          alt={item.product.name}
-          className="w-20 h-20 object-cover rounded-lg shadow-md"
-        />
-        <div>
-          <h3 className="font-medium text-lg">{item.product.name}</h3>
-          <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
+          {cartItems.map((item: any) => (
+            <div
+              key={item.id}
+              className="flex flex-col sm:flex-row justify-between sm:items-center gap-4"
+            >
+              <div className="flex items-start gap-4">
+                <img
+                  src={item.product.imageUrl}
+                  alt={item.product.name}
+                  className="w-20 h-20 object-cover rounded-lg shadow-md"
+                />
+                <div>
+                  <h3 className="font-medium text-lg">{item.product.name}</h3>
+                  <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
+                </div>
+              </div>
+              <p className="font-semibold text-lg sm:text-right">₹{item.product.price}</p>
+            </div>
+          ))}
         </div>
-      </div>
-      <p className="font-semibold text-lg sm:text-right">₹{item.product.price}</p>
-    </div>
-  ))}
-</div>
 
         <div className="flex justify-end mt-6 text-xl font-bold border-t pt-4">
           Total: ₹{total}

@@ -20,12 +20,21 @@ export function FilterSidebar({
 
   useEffect(() => {
     const search = searchParams.get('search');
+    const token = localStorage.getItem('token'); // Retrieve token from localStorage
 
     let url = `${BACKEND_URL}/brands?category=${categoryName}`;
     if (search) url += `&search=${search}`;
 
+    const config = token
+      ? {
+          headers: {
+            Authorization: `Bearer ${token}`, // Pass the token in the Authorization header
+          },
+        }
+      : {};
+
     axios
-      .get(url)
+      .get(url, config) // Include the token in the request if it exists
       .then((res) => {
         const brandNames = res.data.map((b: any) => b.name);
         setBrands(brandNames);
@@ -80,4 +89,3 @@ export function FilterSidebar({
     </div>
   );
 }
-
