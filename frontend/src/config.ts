@@ -1,0 +1,1 @@
+export const BACKEND_URL = "https://ecom-backend.kishantiwari698591.workers.dev"

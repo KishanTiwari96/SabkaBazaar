@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ecom-backend",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-04-08",
+  "dev": {
+    "port": 8787,
+    "host": "localhost"
+  },
+  "vars": {
+    "DATABASE_URL":"prisma://accelerate.prisma-data.net/?api_key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlfa2V5IjoiMTg0ODEwMDEtNGJiNi00ZGJiLTg5ZGYtOTdkZmU4ZGM0YTI5IiwidGVuYW50X2lkIjoiZDljYTRkOWE4MDEwZjk3ODk4MDg5MjNjNzM4OWViZDQ2NmUxMGQ1ZjYyZTg3MzYyNmVjMjkyZWJmNTkzYmI5NiIsImludGVybmFsX3NlY3JldCI6IjM5MjQ1NjJiLTJlOTktNDNjMy1iZjk4LWU2MGUxNWU3MTdkNiJ9.Dq7qS66rDCqnIRadsp4ce9HzrMLoe-2pVoF-MsQiPUE",
+    "JWT_SECRET" : "kishantiwari9605"
+  },
+  "observability": {
+    "logs": {
+      "enabled": true
+    }
+  }
+}
