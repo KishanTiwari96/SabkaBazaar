@@ -37,7 +37,7 @@ products.get('/products', async (c) => {
   const brandName = c.req.query('brand');
   const category = c.req.query('category');
   const sort = c.req.query('sort');
-  const search = c.req.query('search');
+  let search = c.req.query('search');
   console.log("Search Query:", search);
 
   let whereClause: any = {};
@@ -59,10 +59,24 @@ products.get('/products', async (c) => {
   }
 
   if (search) {
-    whereClause.name = {
-      contains: search,
-      mode: 'insensitive',
-    };
+    const baseSearch = search
+      .toLowerCase()
+      .replace(/(es|s)$/, ""); 
+
+    whereClause.OR = [
+      {
+        name: {
+          contains: search,
+          mode: 'insensitive',
+        },
+      },
+      {
+        name: {
+          contains: baseSearch,
+          mode: 'insensitive',
+        },
+      },
+    ];
   }
 
   const products = await prisma.product.findMany({
@@ -87,6 +101,7 @@ products.get('/products', async (c) => {
 
   return c.json(productsWithRating);
 });
+
 
 // Route to get all brands with filtering
 products.get('/brands', async (c) => {
