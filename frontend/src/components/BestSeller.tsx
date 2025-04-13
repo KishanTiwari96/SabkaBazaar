@@ -54,7 +54,7 @@ export default function BestSeller() {
               />
               <h3 className="font-medium text-base line-clamp-2">{p.name}</h3>
               <p className="text-sm text-gray-500">{p.brand?.name || "No Brand"}</p>
-              <p className="text-blue-600 font-semibold mt-1">₹{p.price.toLocaleString()}</p>
+              <p className="text-blue-600 font-semibold mt-1">₹{p.price.toLocaleString('en-IN')}</p>
 
               <div className="mt-1 flex items-center gap-1">
                 <StaticStarRating rating={p.avgRating || 0} />

@@ -236,7 +236,7 @@ export const Product = () => {
               ({product.avgRating?.toFixed(1) || "0.0"})
             </span>
           </div>
-          <h3 className="mt-4 text-xl font-semibold">₹{product.price.toLocaleString()}</h3>
+          <h3 className="mt-4 text-xl font-semibold">₹{product.price.toLocaleString('en-IN')}</h3>
           <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <button
               className="px-4 py-2 bg-blue-500 text-white rounded"
@@ -256,7 +256,7 @@ export const Product = () => {
             </div>
 
             <span className="text-lg font-medium">
-              Total: ₹{product.price.toLocaleString()}
+              Total: ₹{product.price.toLocaleString('en-IN')}
             </span>
           </div>
           <button
@@ -310,7 +310,7 @@ export const Product = () => {
                   <span className="text-sm text-gray-600">({prod.rating.toFixed(1)})</span>
                 </div>
 
-                <p className="text-gray-600 mt-1">₹{prod.price.toLocaleString()}</p>
+                <p className="text-gray-600 mt-1">₹{prod.price.toLocaleString('en-IN')}</p>
 
               </div>
             ))}
@@ -341,7 +341,7 @@ export const Product = () => {
                     <span className="text-xs text-gray-600">({prod.rating.toFixed(1)})</span>
                   </div>
 
-                  <p className="text-gray-600 text-sm mt-1">₹{prod.price.toLocaleString()}</p>
+                  <p className="text-gray-600 text-sm mt-1">₹{prod.price.toLocaleString('en-IN')}</p>
                 </div>
               ))}
             </div>

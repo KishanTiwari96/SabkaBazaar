@@ -126,7 +126,7 @@ export const OrderReview = () => {
                 </div>
               </div>
               <p className="font-semibold text-lg sm:text-right">
-                ₹{item.product.price.toLocaleString()}
+                ₹{item.product.price.toLocaleString('en-IN')}
               </p>
 
             </div>
@@ -134,7 +134,7 @@ export const OrderReview = () => {
         </div>
 
         <div className="flex justify-end mt-6 text-xl font-bold border-t pt-4">
-          Total: ₹{total}
+          Total: ₹{total.toLocaleString('en-In')}
         </div>
       </div>
 

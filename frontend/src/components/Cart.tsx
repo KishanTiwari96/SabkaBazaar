@@ -147,7 +147,7 @@ export const Cart = () => {
                   />
                   <div className="flex-1">
                     <h3 className="text-lg font-medium">{item.product.name}</h3>
-                    <p className="text-gray-500">₹{item.product.price.toLocaleString()}</p>
+                    <p className="text-gray-500">₹{item.product.price.toLocaleString('en-IN')}</p>
                     <div className="flex items-center mt-2 gap-2">
                       <button
                         className="px-2 py-1 bg-gray-200 rounded"
@@ -187,7 +187,7 @@ export const Cart = () => {
                 className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded"
               >
                 <p>
-  Place Order ₹{calculateTotal(cartItems).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}
+    Place Order ₹{calculateTotal(cartItems).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}
 </p>
 
               </button>
