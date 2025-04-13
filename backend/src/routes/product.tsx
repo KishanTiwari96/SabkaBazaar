@@ -11,18 +11,24 @@ const products = new Hono<{
 }>()
 
 // Function to verify user by token in the Authorization header
-const verifyUser = async (c:any) => {
-    const prisma = getPrisma(c.env.DATABASE_URL);
-    const token = c.req.headers.get('Authorization')?.replace('Bearer ', ''); // Get token from Authorization header
-    if (!token) return null
-    try {
-        const decoded = await verify(token, c.env.JWT_SECRET) as { id: string }
-        const user = await prisma.user.findUnique({ where: { id: decoded.id } })
-        return user
-    } catch {
-        return null
-    }
-}
+const verifyUser = async (c: any) => {
+  const prisma = getPrisma(c.env.DATABASE_URL);
+
+  const authHeader = c.req.header('Authorization'); // ✅ safer than headers.get()
+  const token = authHeader?.replace('Bearer ', '');
+  if (!token) return null;
+
+  try {
+    const decoded = await verify(token, c.env.JWT_SECRET) as { id: string };
+    const user = await prisma.user.findUnique({ where: { id: decoded.id } });
+    return user;
+  } catch (err) {
+    console.error('JWT verification failed:', err);
+    return null;
+  }
+};
+
+
 
 // Route to get all products with filtering
 products.get('/products', async (c) => {
