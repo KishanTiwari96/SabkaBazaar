@@ -8,7 +8,7 @@ const Footer = () => {
         <div>
           <h4 className="text-xl font-semibold mb-4">About</h4>
           <p className="text-sm">
-            Welcome to our e-commerce store. Discover the latest in fashion,
+            Welcome to our SabkaBazaar store. Discover the latest in fashion,
             electronics, and more — all in one place.
           </p>
         </div>
