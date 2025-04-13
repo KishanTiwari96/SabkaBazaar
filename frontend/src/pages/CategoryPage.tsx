@@ -121,7 +121,7 @@ const CategoryPage = () => {
                       </span>
                     </div>
                     <h3 className="ml-5 text-black text-xl font-semibold">
-                      ₹{product.price}
+                      ₹{product.price.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}
                     </h3>
                   </Link>
                 ))}

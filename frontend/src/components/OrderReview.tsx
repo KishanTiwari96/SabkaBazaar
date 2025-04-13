@@ -125,7 +125,10 @@ export const OrderReview = () => {
                   <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
                 </div>
               </div>
-              <p className="font-semibold text-lg sm:text-right">₹{item.product.price}</p>
+              <p className="font-semibold text-lg sm:text-right">
+                ₹{item.product.price.toLocaleString()}
+              </p>
+
             </div>
           ))}
         </div>
