@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 export const Categories = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  const categories = ["Fashion", "Electronics", "Sports", "Books", "Toys"];
+  const categories = ["Watches", "Electronics", "Sports", "Toys"];
 
   return (
     <div className="relative mr-4">
