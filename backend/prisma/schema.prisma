@@ -76,6 +76,8 @@ model Order {
   items      OrderItem[]
   total      Float
   status     OrderStatus @default(PENDING)
+  paymentId  String? 
+  refundId   String?  
   createdAt  DateTime    @default(now())
 }
 
@@ -108,4 +110,6 @@ enum OrderStatus {
   SHIPPED
   DELIVERED
   CANCELLED
+  REFUND_PROCESSING
+  REFUND_COMPLETED
 }

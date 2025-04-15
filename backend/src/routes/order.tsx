@@ -6,6 +6,8 @@ const orders = new Hono<{
   Bindings: {
     DATABASE_URL: string;
     JWT_SECRET: string;
+    RAZORPAY_KEY_ID: string;
+    RAZORPAY_KEY_SECRET: string;
   };
 }>();
 
@@ -266,6 +268,7 @@ orders.put('/orders/:id/status', async (c) => {
 
 orders.post('/orders/:orderId/cancel', async (c) => {
   const prisma = getPrisma(c.env.DATABASE_URL);
+  const env = c.env as { RAZORPAY_KEY_ID: string; RAZORPAY_KEY_SECRET: string };
   const user = await verifyUser(c);
   if (!user) return c.res;
 
@@ -283,20 +286,55 @@ orders.post('/orders/:orderId/cancel', async (c) => {
       return c.json({ error: 'Unauthorized' }, 401);
     }
 
-    if (order.status !== 'PENDING') {
-      return c.json({ error: 'Only pending orders can be cancelled' }, 400);
-    }
-
-    const updated = await prisma.order.update({
+    // Set the order status to "REFUND_PROCESSING"
+    const updatedOrder = await prisma.order.update({
       where: { id: orderId },
-      data: { status: 'CANCELLED' },
+      data: {
+        status: 'REFUND_PROCESSING',
+      },
     });
 
-    return c.json({ message: 'Order cancelled', order: updated });
+    // Refund through Razorpay
+    if (!order.paymentId) {
+      return c.json({ error: 'No Razorpay payment ID associated with this order' }, 400);
+    }
+
+    const authHeader = 'Basic ' + btoa(`${env.RAZORPAY_KEY_ID}:${env.RAZORPAY_KEY_SECRET}`);
+
+    const refundRes = await fetch(`https://api.razorpay.com/v1/payments/${order.paymentId}/refund`, {
+      method: 'POST',
+      headers: {
+        'Authorization': authHeader,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        amount: order.total * 100, // Razorpay expects amount in paise
+      }),
+    });
+
+    const refundData = await refundRes.json() as { id: string };
+
+    if (!refundRes.ok) {
+      console.error('Refund failed:', refundData);
+      return c.json({ error: 'Refund failed', details: refundData }, 500);
+    }
+
+    // Update order status to "REFUND_COMPLETED" after successful refund
+    await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        status: 'REFUND_COMPLETED',
+        refundId: refundData.id,
+      },
+    });
+
+    return c.json({ message: 'Order cancelled and refund initiated', order: updatedOrder });
   } catch (err) {
     console.error('Error cancelling order:', err);
     return c.json({ error: 'Failed to cancel order' }, 500);
   }
 });
+
+
 
 export default orders;

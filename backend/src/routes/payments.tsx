@@ -83,9 +83,10 @@ paymentRoute.post('/razorpay/verify', async (c) => {
     const order = await prisma.order.create({
       data: {
         total: total,
-        status: 'PROCESSING', // or PENDING, depending on your business logic
+        status: 'PROCESSING',
+        paymentId: razorpayPaymentId, 
         user: {
-          connect: { id: items[0].userId }, // Assuming you have a userId field in items
+          connect: { id: items[0].userId },
         },
         items: {
           create: items.map((item: any) => ({
@@ -93,11 +94,12 @@ paymentRoute.post('/razorpay/verify', async (c) => {
               connect: { id: item.productId },
             },
             quantity: item.quantity,
-            price: item.productPrice, // Assuming you have this in the item object
+            price: item.productPrice,
           })),
         },
       },
     });
+    
 
     // Return success
     return c.json({ success: true, orderId: order.id });
