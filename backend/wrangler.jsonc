@@ -4,8 +4,10 @@
   "main": "src/index.ts",
   "compatibility_date": "2025-04-08",
   "vars": {
-    "DATABASE_URL":"",
-    "JWT_SECRET" : ""
+    "DATABASE_URL":"prisma://accelerate.prisma-data.net/?api_key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlfa2V5IjoiZGUxN2ZiYzktODE3Yy00NTczLTgyZWUtZmIwMzIzN2M1ZDFmIiwidGVuYW50X2lkIjoiZDljYTRkOWE4MDEwZjk3ODk4MDg5MjNjNzM4OWViZDQ2NmUxMGQ1ZjYyZTg3MzYyNmVjMjkyZWJmNTkzYmI5NiIsImludGVybmFsX3NlY3JldCI6IjM5MjQ1NjJiLTJlOTktNDNjMy1iZjk4LWU2MGUxNWU3MTdkNiJ9.c_khYu4O9erI4x_e25cri_5vJHfiPCx16IqBPGFRCXg",
+    "JWT_SECRET" : "kishantiwari9605",
+    "RAZORPAY_KEY_ID": "rzp_live_3j8ajzCmxjAyel",
+    "RAZORPAY_KEY_SECRET": "4DOpKilrMnLpPNC5Xh9vimDU"
   },
   "observability": {
     "logs": {

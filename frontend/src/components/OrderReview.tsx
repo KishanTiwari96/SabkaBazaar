@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BACKEND_URL } from "../config";
 import { OrderReviewSkeleton } from "./OrderReviewSkeleton";
+import { loadRazorpay } from "./LoadRazorpay";
 
 export const OrderReview = () => {
   const location = useLocation();
@@ -31,33 +32,100 @@ export const OrderReview = () => {
 
   const handleConfirmOrder = async () => {
     try {
-      const token = localStorage.getItem('authToken');
-
+      // Step 1: Load Razorpay SDK
+      const isScriptLoaded = await loadRazorpay();
+      if (!isScriptLoaded) {
+        alert("Failed to load Razorpay SDK. Please try again.");
+        return;
+      }
+  
+      const token = localStorage.getItem("authToken");
+  
       if (!token) {
         alert("You need to log in to place an order");
         navigate("/login");
         return;
       }
-
-      // Include the token in the request headers
-      await axios.post(
-        `${BACKEND_URL}/orders`,
+  
+      // Step 2: Create Razorpay Order (Server-side API call)
+      const createOrderRes = await axios.post(
+        `${BACKEND_URL}/create-razorpay-order`,
         {
-          items: cartItems.map((item: any) => ({
-            productId: item.product.id,
-            quantity: item.quantity,
-          })),
-          total,
+          amount: total,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
-
-      setOrderSuccess(true);
-      setTimeout(() => navigate("/my-orders"), 3000);
+  
+      const { orderId, amount, currency } = createOrderRes.data;
+  
+      // Step 3: Configure Razorpay Checkout
+      const options = {
+        key: "rzp_live_3j8ajzCmxjAyel", // Your Razorpay Key ID
+        amount: amount.toString(),
+        currency,
+        name: "SabkaBazaar",
+        description: "Complete your purchase",
+        order_id: orderId,
+        prefill: {
+          name: user.name,
+          email: user.email,
+        },
+        handler: async (response: any) => {
+          try {
+            // Step 4: Verify payment with backend and store order in DB
+            const verifyRes = await axios.post(
+              `${BACKEND_URL}/razorpay/verify`,
+              {
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpayOrderId: response.razorpay_order_id,
+                razorpaySignature: response.razorpay_signature,
+                items: cartItems.map((item: any) => ({
+                  productId: item.product.id,
+                  quantity: item.quantity,
+                  productPrice: item.product.price, // Assuming product price is available
+                  userId: user.id, // Assuming user data is available in the front-end
+                })),
+                total,
+              },
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+  
+            const verifyData = verifyRes.data;
+            if (verifyData.success) {
+              // Step 5: Show success message and navigate to "My Orders"
+              setOrderSuccess(true);
+              setTimeout(() => navigate("/my-orders"), 3000);
+            } else {
+              alert("Payment verification failed.");
+            }
+          } catch (err) {
+            console.error("Payment verification failed", err);
+            alert("Payment verification failed.");
+          }
+        },
+        theme: {
+          color: "#2563EB", // Customize Razorpay button color
+        },
+      };
+  
+      // Open Razorpay payment gateway
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
     } catch (err) {
-      console.error(err);
-      alert("Failed to place order.");
+      console.error("Payment process failed", err);
+      alert("Failed to initiate payment.");
     }
   };
+  
+  
 
   if (!cartItems || !user) return (
     <div>

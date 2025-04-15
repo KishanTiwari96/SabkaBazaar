@@ -5,6 +5,7 @@ import productRoutes from './routes/product'
 import cartRoutes from './routes/cart'
 import orderRoutes from './routes/order'
 import reviewsRoutes from './routes/review'
+import paymentRoute from './routes/payments'
 
 
 const app = new Hono<{
@@ -35,5 +36,6 @@ app.route("/",cartRoutes);
 app.route("/",productRoutes);
 app.route("/",orderRoutes);
 app.route("/",reviewsRoutes);
+app.route("/",paymentRoute);
 
 export default app

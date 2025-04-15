@@ -152,6 +152,13 @@ export const Product = () => {
   };
 
   const handleBuyNow = () => {
+    const token = localStorage.getItem("authToken");
+  
+      if (!token) {
+        alert("You need to log in to place an order");
+        navigate("/login");
+        return;
+      }
     if (!product) return;
     navigate("/order-review", {
       state: {
