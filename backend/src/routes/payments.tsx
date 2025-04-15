@@ -3,6 +3,13 @@ import { getPrisma } from '../db';
 
 const paymentRoute = new Hono();
 
+paymentRoute.get('/razorpay-key', (c) => {
+  const env = c.env as { RAZORPAY_KEY_ID: string };
+  return c.json({
+    key: env.RAZORPAY_KEY_ID,
+  });
+});
+
 paymentRoute.post('/create-razorpay-order', async (c) => {
   const { amount } = await c.req.json();
 

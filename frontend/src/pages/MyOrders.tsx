@@ -165,7 +165,7 @@ export const MyOrdersPage = () => {
                 <div className="flex justify-between items-center mt-4">
                   <div className="text-lg font-bold text-blue-700">Total: ₹{order.total || 0}</div>
 
-                  {order.status === "PENDING" && (
+                  {(order.status === "PENDING" || order.status === "PROCESSING") && (
                     <button
                       onClick={() => handleCancel(order.id)}
                       className="bg-red-100 text-red-700 hover:bg-red-200 font-medium px-4 py-2 rounded transition"

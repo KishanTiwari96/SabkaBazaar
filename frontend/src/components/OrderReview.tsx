@@ -61,10 +61,13 @@ export const OrderReview = () => {
       );
   
       const { orderId, amount, currency } = createOrderRes.data;
-  
+    
+      const keyRes = await axios.get(`${BACKEND_URL}/razorpay-key`);
+      const { key } = keyRes.data;
+
       // Step 3: Configure Razorpay Checkout
       const options = {
-        key: "rzp_live_3j8ajzCmxjAyel", // Your Razorpay Key ID
+        key, // Your Razorpay Key ID
         amount: amount.toString(),
         currency,
         name: "SabkaBazaar",
