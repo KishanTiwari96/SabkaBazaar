@@ -51,7 +51,7 @@ export const MyOrdersPage = () => {
         }
       );
 
-      const { order, message } = response.data;
+      const {  message } = response.data;
 
       // After refund is initiated, update the status
       setOrders((prev) =>
