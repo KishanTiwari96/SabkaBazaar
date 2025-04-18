@@ -8,6 +8,8 @@ import { Signup } from './components/Signup'
 import { Login } from './components/Login'
 import { MyOrdersPage } from './pages/MyOrders'
 import { OrderReview } from './components/OrderReview'
+import { Address } from './components/AddressForm'
+import { Payment } from './components/Payment'
 function App() {
 
   return (
@@ -21,7 +23,9 @@ function App() {
         <Route path="/products/:id" element={<Product />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/my-orders" element={<MyOrdersPage />} />
-        <Route path="/order-review" element={<OrderReview />} />z
+        <Route path="/order-review" element={<OrderReview />} />
+        <Route path="/address" element={<Address />} />
+        <Route path="/payment" element={<Payment />} />
       </Routes>
     </BrowserRouter>
     </>

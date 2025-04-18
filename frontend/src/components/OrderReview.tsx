@@ -3,159 +3,109 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BACKEND_URL } from "../config";
 import { OrderReviewSkeleton } from "./OrderReviewSkeleton";
-import { loadRazorpay } from "./LoadRazorpay";
 
 export const OrderReview = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { cartItems, total } = location.state || {};
-  const [user, setUser] = useState<any>(null);
-  const [orderSuccess, setOrderSuccess] = useState(false);
-
-  useEffect(() => {
-    // Retrieve the token from localStorage
-    const token = localStorage.getItem('authToken');
-
-    if (token) {
-      // Set the token in the Authorization header for all requests
-      axios.defaults.headers['Authorization'] = `Bearer ${token}`;
-
-      // Fetch user information using the token
-      axios
-        .get(`${BACKEND_URL}/me`)
-        .then((res) => setUser(res.data.user))
-        .catch((err) => console.error("Failed to fetch user info", err));
-    } else {
-      console.log("No token found");
-    }
-  }, []);
-
-  const handleConfirmOrder = async () => {
-    try {
-      // Step 1: Load Razorpay SDK
-      const isScriptLoaded = await loadRazorpay();
-      if (!isScriptLoaded) {
-        alert("Failed to load Razorpay SDK. Please try again.");
-        return;
-      }
   
-      const token = localStorage.getItem("authToken");
-  
-      if (!token) {
-        alert("You need to log in to place an order");
-        navigate("/login");
-        return;
-      }
-  
-      // Step 2: Create Razorpay Order (Server-side API call)
-      const createOrderRes = await axios.post(
-        `${BACKEND_URL}/create-razorpay-order`,
-        {
-          amount: total,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-  
-      const { orderId, amount, currency } = createOrderRes.data;
-    
-      const keyRes = await axios.get(`${BACKEND_URL}/razorpay-key`);
-      const { key } = keyRes.data;
-
-      // Step 3: Configure Razorpay Checkout
-      const options = {
-        key, // Your Razorpay Key ID
-        amount: amount.toString(),
-        currency,
-        name: "SabkaBazaar",
-        description: "Complete your purchase",
-        order_id: orderId,
-        prefill: {
-          name: user.name,
-          email: user.email,
-        },
-        handler: async (response: any) => {
-          try {
-            // Step 4: Verify payment with backend and store order in DB
-            const verifyRes = await axios.post(
-              `${BACKEND_URL}/razorpay/verify`,
-              {
-                razorpayPaymentId: response.razorpay_payment_id,
-                razorpayOrderId: response.razorpay_order_id,
-                razorpaySignature: response.razorpay_signature,
-                items: cartItems.map((item: any) => ({
-                  productId: item.product.id,
-                  quantity: item.quantity,
-                  productPrice: item.product.price, // Assuming product price is available
-                  userId: user.id, // Assuming user data is available in the front-end
-                })),
-                total,
-              },
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              }
-            );
-  
-            const verifyData = verifyRes.data;
-            if (verifyData.success) {
-              // Step 5: Show success message and navigate to "My Orders"
-              setOrderSuccess(true);
-              setTimeout(() => navigate("/my-orders"), 3000);
-            } else {
-              alert("Payment verification failed.");
-            }
-          } catch (err) {
-            console.error("Payment verification failed", err);
-            alert("Payment verification failed.");
-          }
-        },
-        theme: {
-          color: "#2563EB", // Customize Razorpay button color
-        },
-      };
-  
-      // Open Razorpay payment gateway
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
-    } catch (err) {
-      console.error("Payment process failed", err);
-      alert("Failed to initiate payment.");
-    }
+  // Load from location.state or localStorage
+  const { cartItems, total, productId } = location.state || JSON.parse(localStorage.getItem("orderReviewState") || "{}") || {
+    cartItems: [],
+    total: 0,
+    productId: null,
   };
   
-  
+  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  if (!cartItems || !user) return (
-    <div>
-      <OrderReviewSkeleton />
-    </div>
-  );
+  useEffect(() => {
+    // Save state to localStorage for reload persistence
+    localStorage.setItem("orderReviewState", JSON.stringify({ cartItems, total, productId }));
+    
+    const fetchUser = async () => {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        console.log("No token found, redirecting to login");
+        setLoading(false);
+        navigate("/login", { state: { from: location.pathname } });
+        return;
+      }
 
-  if (orderSuccess) {
+      try {
+        console.log("Fetching user from:", `${BACKEND_URL}/me`);
+        axios.defaults.headers["Authorization"] = `Bearer ${token}`;
+        const res = await axios.get(`${BACKEND_URL}/me`);
+        console.log("User response:", res.data);
+        const fetchedUser = res.data.user;
+        if (fetchedUser && fetchedUser.name && fetchedUser.email) {
+          setUser({ name: fetchedUser.name, email: fetchedUser.email });
+        } else {
+          throw new Error("Invalid user data");
+        }
+      } catch (err: any) {
+        console.error("Failed to fetch user info:", err);
+        if (err.response?.status === 401) {
+          console.log("Unauthorized, clearing token and redirecting to login");
+          localStorage.removeItem("authToken");
+          navigate("/login", { state: { from: location.pathname } });
+        } else {
+          alert("Failed to fetch user data. Please try again.");
+        }
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUser();
+  }, [navigate, location.pathname]);
+
+  const handleGoBack = () => {
+    if (productId) {
+      navigate(`/products/${productId}`);
+    } else {
+      navigate("/cart");
+      alert("Product ID not found. Redirecting to cart.");
+    }
+  };
+
+  if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-[70vh] px-4 text-center animate-fade-in">
-        <div className="bg-green-100 rounded-full p-4 shadow-md">
-          <svg
-            className="w-20 h-20 text-green-600"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
+      <div>
+        <OrderReviewSkeleton />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 font-sans">
+        <h1 className="text-4xl font-extrabold mb-10 text-center text-gray-800">
+          🛒 Review Your Order
+        </h1>
+        <div className="bg-yellow-100 text-yellow-800 p-4 rounded-lg mb-8 text-center">
+          Please log in to view your order.
         </div>
-        <h2 className="text-2xl sm:text-3xl font-bold mt-6 text-green-700">
-          Order Placed Successfully!
-        </h2>
-        <p className="text-gray-600 mt-3 text-sm sm:text-base">
-          Redirecting you to your orders shortly...
-        </p>
+      </div>
+    );
+  }
+
+  if (!cartItems.length) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 font-sans">
+        <h1 className="text-4xl font-extrabold mb-10 text-center text-gray-800">
+          🛒 Review Your Order
+        </h1>
+        <div className="bg-white shadow-lg rounded-2xl p-6 mb-8 border border-gray-200">
+          <p className="text-gray-700 text-center">Your cart is empty.</p>
+          <div className="text-center mt-6">
+            <button
+              onClick={() => navigate("/cart")}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl shadow-lg text-lg font-semibold transition-transform hover:scale-105"
+            >
+              Go to Cart
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -168,17 +118,24 @@ export const OrderReview = () => {
 
       {/* User Info */}
       <div className="bg-white shadow-lg rounded-2xl p-6 mb-8 border border-gray-200">
-        <h2 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">📦 Shipping Information</h2>
+        <h2 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">
+          📦 Shipping Information
+        </h2>
         <div className="space-y-1 text-gray-700">
-          <p><strong>Name:</strong> {user.name}</p>
-          <p><strong>Email:</strong> {user.email}</p>
-          <p><strong>User ID:</strong> {user.id}</p>
+          <p>
+            <strong>Name:</strong> {user.name}
+          </p>
+          <p>
+            <strong>Email:</strong> {user.email}
+          </p>
         </div>
       </div>
 
       {/* Product Info */}
       <div className="bg-white shadow-lg rounded-2xl p-6 mb-8 border border-gray-200">
-        <h2 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">🧾 Items in Your Cart</h2>
+        <h2 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">
+          🧾 Items in Your Cart
+        </h2>
         <div className="space-y-6">
           {cartItems.map((item: any) => (
             <div
@@ -197,27 +154,35 @@ export const OrderReview = () => {
                 </div>
               </div>
               <p className="font-semibold text-lg sm:text-right">
-                ₹{item.product.price.toLocaleString('en-IN')}
+                ₹{item.product.price.toLocaleString("en-IN")}
               </p>
-
             </div>
           ))}
         </div>
-
         <div className="flex justify-end mt-6 text-xl font-bold border-t pt-4">
-          Total: ₹{total.toLocaleString('en-In')}
+          Total: ₹{total.toLocaleString("en-IN")}
         </div>
       </div>
 
-      {/* Confirm Button */}
+      {/* Proceed to Address Button */}
       <div className="text-center">
         <button
-          onClick={handleConfirmOrder}
+          onClick={() => navigate("/address", { state: { cartItems, total, productId } })}
           className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 rounded-xl shadow-lg text-lg font-semibold transition-transform hover:scale-105"
         >
-          ✅ Confirm Order
+          Proceed to Buy
+        </button>
+      </div>
+
+      {/* Go Back to Product Button */}
+      <div className="text-center mt-6">
+        <button
+          onClick={handleGoBack}
+          className="bg-white border border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-3 rounded-xl shadow-sm text-lg font-semibold transition-transform hover:scale-105"
+        >
+          🔙 Go Back to Product
         </button>
       </div>
     </div>
   );
-};
+}; 

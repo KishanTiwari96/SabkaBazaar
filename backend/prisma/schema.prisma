@@ -20,6 +20,7 @@ model User {
   mobile     String?   @unique
   name       String
   isAdmin    Boolean   @default(false)
+  address  Json? 
   orders     Order[]
   cartItems  CartItem[]
   createdAt  DateTime  @default(now())

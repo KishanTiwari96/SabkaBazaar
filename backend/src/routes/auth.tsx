@@ -32,8 +32,9 @@ auth.post('/signup', async (c) => {
         name
       }
     });
+  const token = await sign({ id: user.id, exp: Math.floor(Date.now() / 1000) + (60 * 60) }, c.env.JWT_SECRET)
 
-    return c.json({ message: 'User registered', user: { id: user.id, email: user.email, name: user.name } });
+    return c.json({ message: 'User registered', token, user: { id: user.id, email: user.email, name: user.name } });
   } catch (err) {
     console.error('Signup error:', err);
     return c.json({ error: 'Internal server error' }, 500);
@@ -87,7 +88,8 @@ auth.get('/me', async (c) => {
         email: true,
         name: true,
         isAdmin: true,
-        createdAt: true
+        createdAt: true,
+        address: true
       }
     })
 
@@ -96,5 +98,26 @@ auth.get('/me', async (c) => {
     return c.json({ error: 'Invalid token' }, 401)
   }
 })
+
+auth.put('/user/address', async (c) => {
+  const token = c.req.header('Authorization')?.replace('Bearer ', '');
+  if (!token) return c.json({ error: 'Unauthorized' }, 401);
+
+  try {
+    const { id } = await verify(token, c.env.JWT_SECRET) as { id: string };
+    const address = await c.req.json();
+
+    const prisma = getPrisma(c.env.DATABASE_URL);
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: { address }
+    });
+
+    return c.json({ message: 'Address updated', user: updatedUser });
+  } catch (err) {
+    return c.json({ error: 'Invalid token or failed to update' }, 400);
+  }
+});
+
 
 export default auth;

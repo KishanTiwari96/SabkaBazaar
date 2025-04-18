@@ -170,6 +170,7 @@ export const Product = () => {
           },
         ],
         total: product.price * quantity,
+        productId: product.id,
       },
     });
   };
