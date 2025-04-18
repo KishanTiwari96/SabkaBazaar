@@ -2,6 +2,7 @@
 
 **SabkaBazaar** is a full-featured e-commerce website where users can browse, filter, and shop for products with a smooth and responsive experience. It supports authentication via email/password and mobile OTP (using Firebase). Users can manage their cart, place orders, and leave reviews.
 
+Live Url : https://sabka-bazaar-official.vercel.app/
 ## ✨ Features
 
 - **Authentication**
