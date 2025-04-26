@@ -86,7 +86,6 @@ export const Product = () => {
   const { id } = useParams();
   const { addToRecentlyViewed } = useUser();
 
-  const [isSticky, setIsSticky] = useState(true);
   const reviewRef = useRef<HTMLDivElement | null>(null);
   const specificationsRef = useRef<HTMLDivElement | null>(null);
   const productRef = useRef<HTMLDivElement | null>(null);
@@ -192,8 +191,8 @@ export const Product = () => {
 
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsSticky(!entry.isIntersecting);
+      () => {
+        // Empty callback since we're not using the entry parameter
       },
       { threshold: 0.1 }
     );
