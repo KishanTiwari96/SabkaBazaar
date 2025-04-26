@@ -80,6 +80,45 @@ Testing
 - Create an account with any email and password.
 - Or login with a phone number using OTP.
 - Add products to your cart and place an order.
-- Leave a review for a product you’ve purchased.
+- Leave a review for a product you've purchased.
+
+## Firebase Authentication Setup
+
+### Frontend Setup
+The frontend is already configured with Firebase client SDK to support Google authentication.
+
+### Backend Setup
+1. Go to the [Firebase Console](https://console.firebase.google.com/)
+2. Select your project (e-commerce-a53a8)
+3. Go to Project Settings > Service accounts
+4. Click "Generate new private key" to download a JSON file containing your Firebase service account credentials
+5. Open the downloaded JSON file and update the environment variables in your backend wrangler.jsonc file:
+
+```json
+"FIREBASE_PROJECT_ID": "your-project-id", // Copy from the JSON file
+"FIREBASE_PRIVATE_KEY": "your-private-key", // Copy the entire private_key value from the JSON file
+"FIREBASE_CLIENT_EMAIL": "your-service-account-email" // Copy from the JSON file (ends with @your-project-id.iam.gserviceaccount.com)
+```
+
+6. Make sure the private key includes the begin and end markers:
+```
+"FIREBASE_PRIVATE_KEY": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBA... ...your full key here... ...3DR55uNw==\n-----END PRIVATE KEY-----\n"
+```
+
+7. If you continue to have issues, try URL encoding the private key or removing newlines manually
+
+### Troubleshooting Google Sign-in
+If you see 401 Unauthorized errors after attempting to sign in:
+1. Check browser console for detailed error messages
+2. Verify your Firebase service account has the "Firebase Authentication Admin" role
+3. Make sure you're using the correct service account email and private key
+4. Check your backend logs for more detailed error information
+
+### Testing the Google Authentication
+1. Run the backend: `cd backend && npm run dev`
+2. Run the frontend: `cd frontend && npm run dev`
+3. Click "Sign in with Google" button in the login page
+4. Complete the Google login flow
+5. You should be redirected to the homepage after successful login
 
 Made by KISHAN TIWARI

@@ -14,16 +14,18 @@ datasource db {
 }
 
 model User {
-  id         String    @id @default(cuid())
-  email      String    @unique
-  password   String
-  mobile     String?   @unique
-  name       String
-  isAdmin    Boolean   @default(false)
-  address  Json? 
-  orders     Order[]
-  cartItems  CartItem[]
-  createdAt  DateTime  @default(now())
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  mobile        String?   @unique
+  name          String
+  isAdmin       Boolean   @default(false)
+  address       Json? 
+  profilePicture String?
+  emailVerified Boolean   @default(false)
+  orders        Order[]
+  cartItems     CartItem[]
+  createdAt     DateTime  @default(now())
 
   Review Review[]
 }

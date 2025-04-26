@@ -93,4 +93,42 @@ reviews.delete('/reviews/:id', async (c) => {
   return c.json({ message: 'Review deleted' })
 })
 
+// Add a route that's compatible with the frontend's existing calls
+reviews.post('/products/:productId/reviews', async (c) => {
+  const prisma = getPrisma(c.env.DATABASE_URL);
+  const user = await verifyUser(c)
+  if (!user) return c.json({ error: 'Unauthorized' }, 401)
+
+  const productId = c.req.param('productId')
+  const { rating, comment } = await c.req.json()
+
+  const review = await prisma.review.create({
+    data: {
+      userId: user.id,
+      productId,
+      rating,
+      comment
+    }
+  })
+
+  return c.json({ message: 'Review added', review })
+})
+
+// Add a route for deleting reviews via product
+reviews.delete('/products/:productId/reviews/:id', async (c) => {
+  const prisma = getPrisma(c.env.DATABASE_URL);
+  const user = await verifyUser(c)
+  if (!user) return c.json({ error: 'Unauthorized' }, 401)
+
+  const id = c.req.param('id')
+  const review = await prisma.review.findUnique({ where: { id } })
+
+  if (!review || review.userId !== user.id) {
+    return c.json({ error: 'Unauthorized or not found' }, 401)
+  }
+
+  await prisma.review.delete({ where: { id } })
+  return c.json({ message: 'Review deleted' })
+})
+
 export default reviews

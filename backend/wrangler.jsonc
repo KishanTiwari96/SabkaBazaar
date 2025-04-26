@@ -3,11 +3,15 @@
   "name": "ecom-backend",
   "main": "src/index.ts",
   "compatibility_date": "2025-04-08",
+  "compatibility_flags": ["nodejs_compat"],
   "vars": {
     "DATABASE_URL":"",
     "JWT_SECRET" : "",
     "RAZORPAY_KEY_ID": "",
-    "RAZORPAY_KEY_SECRET": ""
+    "RAZORPAY_KEY_SECRET": "",
+    "FIREBASE_PROJECT_ID": "",
+    "FIREBASE_PRIVATE_KEY": "",
+    "FIREBASE_CLIENT_EMAIL": ""
   },
   "observability": {
     "logs": {

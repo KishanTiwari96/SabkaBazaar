@@ -1,6 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAuth } from 'firebase/auth'
+import { getAuth, GoogleAuthProvider } from 'firebase/auth'
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -17,7 +17,24 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
+console.log("Initializing Firebase with config:", { 
+  apiKey: firebaseConfig.apiKey,
+  authDomain: firebaseConfig.authDomain,
+  projectId: firebaseConfig.projectId
+});
+
 const app = initializeApp(firebaseConfig);
 
-export const auth=getAuth();
+export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
+
+// Configure Google provider to request email and profile scopes
+googleProvider.addScope('email');
+googleProvider.addScope('profile');
+
+// Configure Google provider to select account
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
+
 export default app

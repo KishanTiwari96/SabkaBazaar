@@ -37,6 +37,10 @@ products.get('/products', async (c) => {
   const brandName = c.req.query('brand');
   const category = c.req.query('category');
   const sort = c.req.query('sort');
+  const minPrice = c.req.query('minPrice');
+  const maxPrice = c.req.query('maxPrice');
+  const minRating = c.req.query('minRating');
+  const inStock = c.req.query('inStock');
   let search = c.req.query('search');
   console.log("Search Query:", search);
 
@@ -79,6 +83,24 @@ products.get('/products', async (c) => {
     ];
   }
 
+  // Add price range filter
+  if (minPrice || maxPrice) {
+    whereClause.price = {};
+    if (minPrice) {
+      whereClause.price.gte = parseFloat(minPrice);
+    }
+    if (maxPrice) {
+      whereClause.price.lte = parseFloat(maxPrice);
+    }
+  }
+
+  // Add stock filter
+  if (inStock === 'true') {
+    whereClause.stock = {
+      gt: 0
+    };
+  }
+
   const products = await prisma.product.findMany({
     where: whereClause,
     include: {
@@ -98,6 +120,12 @@ products.get('/products', async (c) => {
       avgRating: parseFloat(avgRating.toFixed(1)),
     };
   });
+
+  // Filter by rating after calculating average ratings
+  if (minRating) {
+    const minRatingValue = parseFloat(minRating);
+    return c.json(productsWithRating.filter(product => product.avgRating >= minRatingValue));
+  }
 
   return c.json(productsWithRating);
 });
@@ -186,7 +214,16 @@ products.get('/products/:id', async (c) => {
     include: {
       images: true,
       brand: true,
-      Review: true,
+      Review: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
+        }
+      },
     },
   });
 
@@ -199,12 +236,23 @@ products.get('/products/:id', async (c) => {
     ? parseFloat((totalRating / product.Review.length).toFixed(1))
     : 0;
 
+  // Transform reviews to match the expected format in the frontend
+  const reviews = product.Review.map(r => ({
+    _id: r.id,
+    user: r.user.id,
+    name: r.user.name,
+    rating: r.rating,
+    comment: r.comment,
+    createdAt: r.createdAt.toISOString()
+  }));
+
   const { Review, ...rest } = product;
 
   return c.json({
     product: {
       ...rest,
       avgRating,
+      reviews,
     },
   });
 });
