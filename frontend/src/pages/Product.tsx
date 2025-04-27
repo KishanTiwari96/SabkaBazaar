@@ -8,6 +8,7 @@ import { StaticStarRating } from "../components/StaticStarRating";
 import { ProductSkeleton } from "../components/ProductSkeleton";
 import Footer from "../components/Footer";
 import { useUser } from "../components/UserContext";
+import { showNotification } from "../components/Notification";
 
 
 interface Review {
@@ -277,12 +278,18 @@ export const Product = () => {
 
   const addToCart = async () => {
     if (!token) {
-      alert("Please log in to add items to cart");
+      showNotification({
+        message: "Please log in to add items to cart",
+        type: "warning"
+      });
       navigate("/login");
       return;
     }
     if (!product?.id) {
-      alert("Product not available");
+      showNotification({
+        message: "Product not available",
+        type: "error"
+      });
       return;
     }
 
@@ -301,25 +308,25 @@ export const Product = () => {
         }
       );
       
-      // Success notification
-      const notification = document.getElementById('cartNotification');
-      if (notification) {
-        notification.classList.remove('translate-y-full');
-        notification.classList.add('translate-y-0');
-        
-        setTimeout(() => {
-          notification.classList.remove('translate-y-0');
-          notification.classList.add('translate-y-full');
-        }, 3000);
-      }
+      showNotification({
+        message: `${product.name} added to cart successfully!`,
+        type: "success"
+      });
+      
     } catch (err: any) {
       console.error("Error adding to cart:", err);
       if (err.response?.status === 401) {
-        alert("Session expired. Please log in again.");
+        showNotification({
+          message: "Session expired. Please log in again.",
+          type: "error"
+        });
         localStorage.removeItem("authToken");
         navigate("/login");
       } else {
-        alert(`Failed to add to cart: ${err.response?.data?.error || "Server error"}`);
+        showNotification({
+          message: `Failed to add to cart: ${err.response?.data?.error || "Server error"}`,
+          type: "error"
+        });
       }
     } finally {
       setIsAddingToCart(false);
@@ -329,12 +336,16 @@ export const Product = () => {
   const handleBuyNow = () => {
     const token = localStorage.getItem("authToken");
   
-      if (!token) {
-        alert("You need to log in to place an order");
-        navigate("/login");
-        return;
-      }
+    if (!token) {
+      showNotification({
+        message: "You need to log in to place an order",
+        type: "warning"
+      });
+      navigate("/login");
+      return;
+    }
     if (!product) return;
+    
     navigate("/order-review", {
       state: {
         cartItems: [

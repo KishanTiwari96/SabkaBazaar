@@ -5,6 +5,7 @@ import { useUser } from './UserContext'
 import { useNavigate } from 'react-router-dom'
 import { auth, googleProvider } from './Firebase'
 import { useState } from 'react'
+import { showNotification } from './Notification'
 
 const SigninWithGoogle = () => {
   const { setUser } = useUser()
@@ -61,12 +62,18 @@ const SigninWithGoogle = () => {
         
         // Navigate after a short delay to ensure state updates complete
         setTimeout(() => {
-          alert('Logged in with Google successfully!')
+          showNotification({
+            message: 'Logged in with Google successfully!',
+            type: 'success'
+          })
           navigate('/')
         }, 500)
       } catch (backendErr) {
         console.error('Backend API error:', backendErr)
-        alert('Login failed: Server error processing Google login')
+        showNotification({
+          message: 'Login failed: Server error processing Google login',
+          type: 'error'
+        })
       }
     } catch (err) {
       console.error('Google login failed:', err)
@@ -87,7 +94,10 @@ const SigninWithGoogle = () => {
         }
       }
       
-      alert(errorMessage)
+      showNotification({
+        message: errorMessage,
+        type: 'error'
+      })
     } finally {
       setIsLoading(false)
     }

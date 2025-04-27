@@ -4,6 +4,7 @@ import { BACKEND_URL } from "../config";
 import { AppBar } from "../components/AppBar";
 import { useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
+import { showNotification } from "../components/Notification";
 
 export const MyOrdersPage = () => {
   interface Order {
@@ -26,12 +27,13 @@ export const MyOrdersPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [processingOrderId, setProcessingOrderId] = useState<string | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [orderToCancel, setOrderToCancel] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const handleCancel = async (orderId: string) => {
-    const confirmed = window.confirm("Are you sure you want to cancel this order?");
-    if (!confirmed) return;
-
+    setOrderToCancel(null);
+    setShowConfirmDialog(false);
     setProcessingOrderId(orderId);
 
     try {
@@ -67,7 +69,10 @@ export const MyOrdersPage = () => {
         )
       );
 
-      alert(message || "Order cancelled and refund initiated!");
+      showNotification({
+        message: message || "Order cancelled and refund initiated!",
+        type: "success"
+      });
     } catch (err: any) {
       console.error("Failed to cancel order:", err);
       setOrders((prev) =>
@@ -75,10 +80,18 @@ export const MyOrdersPage = () => {
           o.id === orderId ? { ...o, status: "PENDING" } : o // Revert status back to 'PENDING'
         )
       );
-      alert(`Failed to cancel order: ${err.response?.data?.error || "Server error"}`);
+      showNotification({
+        message: `Failed to cancel order: ${err.response?.data?.error || "Server error"}`,
+        type: "error"
+      });
     } finally {
       setProcessingOrderId(null);
     }
+  };
+
+  const initiateCancel = (orderId: string) => {
+    setOrderToCancel(orderId);
+    setShowConfirmDialog(true);
   };
 
   useEffect(() => {
@@ -213,6 +226,36 @@ export const MyOrdersPage = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <AppBar />
       
+      {/* Confirmation Dialog */}
+      {showConfirmDialog && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 animate-fade-in">
+            <h3 className="text-xl font-bold text-gray-900 mb-3">Cancel Order</h3>
+            <p className="text-gray-600 mb-6">Are you sure you want to cancel this order? This action cannot be undone.</p>
+            <div className="flex gap-3 justify-end">
+              <button 
+                onClick={() => setShowConfirmDialog(false)}
+                className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition"
+              >
+                No, Keep Order
+              </button>
+              <button 
+                onClick={() => orderToCancel && handleCancel(orderToCancel)}
+                className="px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition flex items-center"
+              >
+                {processingOrderId && (
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                )}
+                Yes, Cancel Order
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="flex-grow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-md overflow-hidden mb-8">
@@ -326,7 +369,7 @@ export const MyOrdersPage = () => {
 
                   {(order.status === "PENDING" || order.status === "PROCESSING") && (
                     <button
-                      onClick={() => handleCancel(order.id)}
+                      onClick={() => initiateCancel(order.id)}
                         disabled={processingOrderId === order.id}
                         className="flex items-center px-4 py-2 border border-red-300 text-red-700 bg-white hover:bg-red-50 rounded-lg transition duration-150 disabled:opacity-50"
                       >

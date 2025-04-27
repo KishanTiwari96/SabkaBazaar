@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { BACKEND_URL } from "../config";
+import { showNotification } from "./Notification";
 
 export const Address = () => {
   const navigate = useNavigate();
@@ -58,7 +59,10 @@ export const Address = () => {
           localStorage.removeItem("authToken");
           navigate("/login", { state: { from: location.pathname } });
         } else {
-          alert("Failed to fetch user data. Please try again.");
+          showNotification({
+            message: "Failed to fetch user data. Please try again.",
+            type: "error"
+          });
         }
         setUser(null);
       } finally {
@@ -105,7 +109,10 @@ export const Address = () => {
     const token = localStorage.getItem("authToken");
 
     if (!token) {
-      alert("Please log in to save the address");
+      showNotification({
+        message: "Please log in to save the address",
+        type: "warning"
+      });
       navigate("/login", { state: { from: location.pathname } });
       return;
     }
@@ -126,7 +133,10 @@ export const Address = () => {
         localStorage.removeItem("authToken");
         navigate("/login", { state: { from: location.pathname } });
       } else {
-        alert("Failed to save the address. Please try again.");
+        showNotification({
+          message: "Failed to save the address. Please try again.",
+          type: "error"
+        });
       }
     } finally {
       setSaving(false);

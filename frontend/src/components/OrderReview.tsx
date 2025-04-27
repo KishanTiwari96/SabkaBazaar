@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BACKEND_URL } from "../config";
 import { OrderReviewSkeleton } from "./OrderReviewSkeleton";
+import { showNotification } from "./Notification";
 
 export const OrderReview = () => {
   const location = useLocation();
@@ -53,7 +54,10 @@ export const OrderReview = () => {
           localStorage.removeItem("authToken");
           navigate("/login", { state: { from: location.pathname } });
         } else {
-          alert("Failed to fetch user data. Please try again.");
+          showNotification({
+            message: "Failed to fetch user data. Please try again.",
+            type: "error"
+          });
         }
         setUser(null);
       } finally {
@@ -68,7 +72,10 @@ export const OrderReview = () => {
       navigate(`/products/${productId}`);
     } else {
       navigate("/cart");
-      alert("Product ID not found. Redirecting to cart.");
+      showNotification({
+        message: "Product ID not found. Redirecting to cart.",
+        type: "info"
+      });
     }
   };
 

@@ -13,11 +13,13 @@ import { Payment } from './components/Payment'
 import { Profile } from './components/Profile'
 import AllProducts from './pages/AllProducts'
 import SearchResults from './pages/SearchResults'
+import NotificationComponent from './components/Notification'
 
 function App() {
 
   return (
     <>
+      <NotificationComponent />
       <BrowserRouter>
       <Routes>
         <Route path="/" element = {<Home />}></Route>

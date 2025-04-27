@@ -5,6 +5,7 @@ import { AppBar } from './AppBar';
 import { useUser } from './UserContext';
 import { useNavigate, Link } from 'react-router-dom';
 import SigninWithGoogle from './SigninWithGoogle';
+import { showNotification } from './Notification';
 
 export const Login = () => {
   const { setUser } = useUser();
@@ -32,6 +33,10 @@ export const Login = () => {
       if (token && user) {
         localStorage.setItem('authToken', token);
         setUser(user);
+        showNotification({
+          message: 'Login successful! Welcome back.',
+          type: 'success'
+        });
         navigate('/');
       } else {
         throw new Error('Invalid response data');
@@ -39,7 +44,12 @@ export const Login = () => {
     } catch (err: unknown) {
       console.error('Login failed:', err);
       const axiosError = err as AxiosError<{ error: string }>;
-      setError(axiosError.response?.data?.error || 'Invalid email or password');
+      const errorMessage = axiosError.response?.data?.error || 'Invalid email or password';
+      setError(errorMessage);
+      showNotification({
+        message: errorMessage,
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }

@@ -5,6 +5,7 @@ import axios from "axios";
 import { BACKEND_URL } from "../config";
 import { useNavigate } from "react-router-dom";
 import { getAuthHeaders, isGoogleUser } from "../utils/auth";
+import { showNotification } from "./Notification";
 
 interface AddressData {
   street: string;
@@ -149,14 +150,20 @@ export const Profile = () => {
         });
         
         setIsEditing(false);
-        alert("Profile updated successfully!");
+        showNotification({
+          message: "Profile updated successfully!",
+          type: "success"
+        });
       } else {
         throw new Error("No user data returned from server");
       }
     } catch (error) {
       console.error("Failed to update profile:", error);
       setError("Failed to update profile. Please try again.");
-      alert("Failed to update profile. Please try again.");
+      showNotification({
+        message: "Failed to update profile. Please try again.",
+        type: "error"
+      });
     } finally {
       setAddressLoading(false);
     }
@@ -194,13 +201,20 @@ export const Profile = () => {
         setIsSettingPassword(false);
         setPassword("");
         setConfirmPassword("");
-        alert("Password set successfully! You can now login with your email and password.");
+        showNotification({
+          message: "Password set successfully! You can now login with your email and password.",
+          type: "success"
+        });
       } else {
         throw new Error(response.data.error || "Failed to set password");
       }
     } catch (error) {
       console.error("Failed to set password:", error);
       setPasswordError("Failed to set password. Please try again.");
+      showNotification({
+        message: "Failed to set password. Please try again.",
+        type: "error"
+      });
     } finally {
       setPasswordLoading(false);
     }

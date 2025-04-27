@@ -5,6 +5,7 @@ import { AppBar } from './AppBar'
 import { useUser } from './UserContext'
 import { useNavigate, Link } from 'react-router-dom'
 import SigninWithGoogle from './SigninWithGoogle'
+import { showNotification } from './Notification'
 
 export const Signup = () => {
   const { setUser } = useUser()
@@ -54,11 +55,23 @@ export const Signup = () => {
 
       localStorage.setItem('authToken', token)
       setUser(user)
+      
+      showNotification({
+        message: 'Account created successfully! Welcome to Sabka Bazaar.',
+        type: 'success'
+      })
+      
       navigate('/')
     } catch (err: unknown) {
       console.error('Signup failed:', err)
       const axiosError = err as AxiosError<{ error: string }>
-      setError(axiosError.response?.data?.error || 'Failed to create account. Please try again.')
+      const errorMessage = axiosError.response?.data?.error || 'Failed to create account. Please try again.'
+      setError(errorMessage)
+      
+      showNotification({
+        message: errorMessage,
+        type: 'error'
+      })
     } finally {
       setLoading(false)
     }

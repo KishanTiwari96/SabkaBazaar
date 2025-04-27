@@ -3,6 +3,7 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { loadRazorpay } from "./LoadRazorpay";
+import { showNotification } from "./Notification";
 
 export const Payment = () => {
   const location = useLocation();
@@ -52,7 +53,10 @@ export const Payment = () => {
       // Step 1: Load Razorpay SDK
       const isScriptLoaded = await loadRazorpay();
       if (!isScriptLoaded) {
-        alert("Failed to load Razorpay SDK. Please try again.");
+        showNotification({
+          message: "Failed to load Razorpay SDK. Please try again.",
+          type: "error"
+        });
         setLoading(false);
         return;
       }
@@ -60,7 +64,10 @@ export const Payment = () => {
       const token = localStorage.getItem("authToken");
   
       if (!token) {
-        alert("You need to log in to place an order");
+        showNotification({
+          message: "You need to log in to place an order",
+          type: "warning"
+        });
         navigate("/login");
         setLoading(false);
         return;
@@ -126,14 +133,25 @@ export const Payment = () => {
             if (verifyData.success) {
               // Step 5: Show success message and navigate to "My Orders"
               setOrderSuccess(true);
+              showNotification({
+                message: "Payment successful! Your order has been placed.",
+                type: "success",
+                duration: 5000
+              });
               setTimeout(() => navigate("/my-orders"), 3000);
             } else {
-              alert("Payment verification failed.");
+              showNotification({
+                message: "Payment verification failed.",
+                type: "error"
+              });
               setProcessingPayment(false);
             }
           } catch (err) {
             console.error("Payment verification failed", err);
-            alert("Payment verification failed.");
+            showNotification({
+              message: "Payment verification failed.",
+              type: "error"
+            });
             setProcessingPayment(false);
           }
         },
@@ -152,7 +170,10 @@ export const Payment = () => {
       rzp.open();
     } catch (err) {
       console.error("Payment process failed", err);
-      alert("Failed to initiate payment.");
+      showNotification({
+        message: "Failed to initiate payment.",
+        type: "error"
+      });
       setLoading(false);
       setProcessingPayment(false);
     }

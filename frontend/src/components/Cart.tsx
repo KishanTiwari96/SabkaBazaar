@@ -4,6 +4,7 @@ import { BACKEND_URL } from "../config";
 import { AppBar } from "./AppBar";
 import { useNavigate, Link } from "react-router-dom";
 import Footer from "./Footer";
+import { showNotification } from "./Notification";
 
 interface Product {
   id: string;
@@ -28,6 +29,7 @@ export const Cart = () => {
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
   const [isRemoving, setIsRemoving] = useState<string | null>(null);
   const [isClearing, setIsClearing] = useState(false);
+  const [showConfirmClear, setShowConfirmClear] = useState(false);
   const navigate = useNavigate();
 
   const fetchCart = async () => {
@@ -113,17 +115,23 @@ export const Cart = () => {
         },
       });
       fetchCart();
+      showNotification({
+        message: "Item removed from cart successfully",
+        type: "success",
+      });
     } catch (err) {
       console.error("Error removing item", err);
+      showNotification({
+        message: "Failed to remove item from cart",
+        type: "error",
+      });
     } finally {
       setIsRemoving(null);
     }
   };
 
   const clearCart = async () => {
-    const confirmed = window.confirm("Are you sure you want to clear your cart?");
-    if (!confirmed) return;
-    
+    setShowConfirmClear(false);
     setIsClearing(true);
     const token = localStorage.getItem("authToken");
 
@@ -134,8 +142,16 @@ export const Cart = () => {
         },
       });
       fetchCart();
+      showNotification({
+        message: "Cart cleared successfully",
+        type: "success",
+      });
     } catch (err) {
       console.error("Error clearing cart", err);
+      showNotification({
+        message: "Failed to clear cart",
+        type: "error",
+      });
     } finally {
       setIsClearing(false);
     }
@@ -156,6 +172,36 @@ export const Cart = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <AppBar />
+      
+      {/* Confirmation Dialog */}
+      {showConfirmClear && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 animate-fade-in">
+            <h3 className="text-xl font-bold text-gray-900 mb-3">Clear Cart</h3>
+            <p className="text-gray-600 mb-6">Are you sure you want to clear all items from your cart?</p>
+            <div className="flex gap-3 justify-end">
+              <button 
+                onClick={() => setShowConfirmClear(false)}
+                className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={clearCart}
+                className="px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition flex items-center"
+              >
+                {isClearing && (
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                )}
+                Clear Cart
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       <div className="flex-grow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -292,7 +338,7 @@ export const Cart = () => {
                     <div className="p-6 bg-gray-50 border-t border-gray-100">
                       <button
                         className="text-red-600 hover:text-red-800 font-medium text-sm flex items-center disabled:opacity-50"
-                        onClick={clearCart}
+                        onClick={() => setShowConfirmClear(true)}
                         disabled={isClearing}
                       >
                         {isClearing ? (
