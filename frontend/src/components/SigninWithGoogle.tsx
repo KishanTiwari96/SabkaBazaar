@@ -1,52 +1,113 @@
-import { signInWithPopup } from 'firebase/auth'
+import { signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth'
 import axios from 'axios'
 import { BACKEND_URL } from '../config'
 import { useUser } from './UserContext'
 import { useNavigate } from 'react-router-dom'
 import { auth, googleProvider } from './Firebase'
+import { useEffect } from 'react'
 
 const SigninWithGoogle = () => {
   const { setUser } = useUser()
   const navigate = useNavigate()
 
+  // Handle redirect result when returning from Google authentication
+  useEffect(() => {
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          console.log('Google redirect sign-in successful');
+          
+          // Extract user info from Google response
+          const googleUser = {
+            uid: result.user.uid,
+            email: result.user.email,
+            displayName: result.user.displayName || '',
+            photoURL: result.user.photoURL,
+            emailVerified: result.user.emailVerified
+          }
+          
+          console.log('Google user data:', googleUser)
+          
+          const res = await axios.post(
+            `${BACKEND_URL}/firebase-login`,
+            { googleUser },
+            { withCredentials: true }
+          )
+
+          console.log('Backend response:', res.data)
+          
+          // Ensure the profile picture URL is properly set in the user data
+          if (res.data.user && !res.data.user.profilePicture && googleUser.photoURL) {
+            res.data.user.profilePicture = googleUser.photoURL
+          }
+          
+          // Store token in localStorage
+          localStorage.setItem('authToken', res.data.token)
+          
+          // Store user data in context with complete profile picture URL
+          setUser(res.data.user)
+          
+          alert('Logged in with Google successfully!')
+          navigate('/')
+        }
+      } catch (err) {
+        console.error('Google redirect sign-in failed:', err)
+      }
+    };
+
+    handleRedirectResult();
+  }, [navigate, setUser]);
+
   const handleGoogleLogin = async () => {
     try {
       console.log('Starting Google sign-in process...')
-      const result = await signInWithPopup(auth, googleProvider)
-      console.log('Google sign-in successful')
       
-      // Extract user info from Google response
-      const googleUser = {
-        uid: result.user.uid,
-        email: result.user.email,
-        displayName: result.user.displayName || '',
-        photoURL: result.user.photoURL,
-        emailVerified: result.user.emailVerified
-      }
+      // Detect if device is mobile
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       
-      console.log('Google user data:', googleUser)
-      
-      const res = await axios.post(
-        `${BACKEND_URL}/firebase-login`,
-        { googleUser },
-        { withCredentials: true }
-      )
+      if (isMobile) {
+        // Use redirect for mobile devices
+        await signInWithRedirect(auth, googleProvider);
+        // The rest will be handled in the useEffect when redirect completes
+      } else {
+        // Use popup for desktop
+        const result = await signInWithPopup(auth, googleProvider)
+        console.log('Google sign-in successful')
+        
+        // Extract user info from Google response
+        const googleUser = {
+          uid: result.user.uid,
+          email: result.user.email,
+          displayName: result.user.displayName || '',
+          photoURL: result.user.photoURL,
+          emailVerified: result.user.emailVerified
+        }
+        
+        console.log('Google user data:', googleUser)
+        
+        const res = await axios.post(
+          `${BACKEND_URL}/firebase-login`,
+          { googleUser },
+          { withCredentials: true }
+        )
 
-      console.log('Backend response:', res.data)
-      
-      // Ensure the profile picture URL is properly set in the user data
-      if (res.data.user && !res.data.user.profilePicture && googleUser.photoURL) {
-        res.data.user.profilePicture = googleUser.photoURL
+        console.log('Backend response:', res.data)
+        
+        // Ensure the profile picture URL is properly set in the user data
+        if (res.data.user && !res.data.user.profilePicture && googleUser.photoURL) {
+          res.data.user.profilePicture = googleUser.photoURL
+        }
+        
+        // Store token in localStorage
+        localStorage.setItem('authToken', res.data.token)
+        
+        // Store user data in context with complete profile picture URL
+        setUser(res.data.user)
+        
+        alert('Logged in with Google successfully!')
+        navigate('/')
       }
-      
-      // Store token in localStorage
-      localStorage.setItem('authToken', res.data.token)
-      
-      // Store user data in context with complete profile picture URL
-      setUser(res.data.user)
-      
-      alert('Logged in with Google successfully!')
-      navigate('/')
     } catch (err) {
       console.error('Google login failed:', err)
       if (axios.isAxiosError(err)) {
